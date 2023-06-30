@@ -10,3 +10,15 @@ func GetAllInMap[K comparable, V comparable](m map[K]V, keys []K) (res []V) {
 	}
 	return
 }
+
+type Map[K comparable, V any] struct {
+	m map[K]V
+}
+
+func (m *Map[K, V]) Put(key K, value V) *Map[K, V] {
+	m.m[key] = value
+	return m
+}
+func (m *Map[K, V]) Get(key K) V {
+	return m.m[key]
+}
