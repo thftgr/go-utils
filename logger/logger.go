@@ -19,12 +19,10 @@ type Logger interface {
 type LEVEL int
 
 const (
-	ALL LEVEL = iota
-	TRACE
-	DEBUG
-	INFO
+	FATAL LEVEL = iota
 	ERROR
 	WARN
-	FATAL
-	OFF
+	INFO
+	DEBUG
+	TRACE
 )
