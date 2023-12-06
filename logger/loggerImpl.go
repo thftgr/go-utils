@@ -58,32 +58,32 @@ func (l *LoggerImpl) Trace(v ...any) {
 
 func (l *LoggerImpl) Fatalf(format string, a ...any) {
 	if l.Level >= FATAL {
-		l.printf(l.Err, 2, "FATAL", format, a...)
+		l.printf(l.Err, 1, "FATAL", format, a...)
 	}
 }
 func (l *LoggerImpl) Errorf(format string, a ...any) {
 	if l.Level >= ERROR {
-		l.printf(l.Err, 2, "ERROR", format, a...)
+		l.printf(l.Err, 1, "ERROR", format, a...)
 	}
 }
 func (l *LoggerImpl) Warnf(format string, a ...any) {
 	if l.Level >= WARN {
-		l.printf(l.Out, 2, "WARN", format, a...)
+		l.printf(l.Out, 1, "WARN", format, a...)
 	}
 }
 func (l *LoggerImpl) Infof(format string, a ...any) {
 	if l.Level >= INFO {
-		l.printf(l.Out, 2, "INFO", format, a...)
+		l.printf(l.Out, 1, "INFO", format, a...)
 	}
 }
 func (l *LoggerImpl) Debugf(format string, a ...any) {
 	if l.Level >= DEBUG {
-		l.printf(l.Out, 2, "DEBUG", format, a...)
+		l.printf(l.Out, 1, "DEBUG", format, a...)
 	}
 }
 func (l *LoggerImpl) Tracef(format string, a ...any) {
 	if l.Level >= TRACE {
-		l.printf(l.Out, 2, "TRACE", format, a...)
+		l.printf(l.Out, 1, "TRACE", format, a...)
 	}
 }
 
@@ -98,7 +98,7 @@ func (l *LoggerImpl) print(w io.Writer, skip int, level string, v string) {
 	}
 	if skip > -1 {
 		buf.WriteString(" | ")
-		buf.WriteString(l.getCodeLine(skip))
+		buf.WriteString(l.getCodeLine(skip + 1))
 	}
 	buf.WriteString(" | ")
 	buf.WriteString(level)
@@ -113,7 +113,7 @@ func (l *LoggerImpl) printf(w io.Writer, skip int, level, format string, args ..
 }
 
 func (l *LoggerImpl) getCodeLine(skip int) string {
-	_, file, line, ok := runtime.Caller(skip)
+	_, file, line, ok := runtime.Caller(skip + 1)
 	if !ok {
 		return "???:0"
 	}
