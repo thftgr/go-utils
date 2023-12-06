@@ -3,11 +3,9 @@ package logger
 import (
 	"bytes"
 	"fmt"
+	"github.com/thftgr/go-utils/utils"
 	"io"
 	"os"
-	"runtime"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -98,7 +96,7 @@ func (l *LoggerImpl) print(w io.Writer, skip int, level string, v string) {
 	}
 	if skip > -1 {
 		buf.WriteString(" | ")
-		buf.WriteString(l.getCodeLine(skip + 1))
+		buf.WriteString(utils.GetSourceLine(skip + 1))
 	}
 	buf.WriteString(" | ")
 	buf.WriteString(level)
@@ -110,19 +108,6 @@ func (l *LoggerImpl) print(w io.Writer, skip int, level string, v string) {
 
 func (l *LoggerImpl) printf(w io.Writer, skip int, level, format string, args ...any) {
 	l.print(w, skip+1, level, fmt.Sprintf(format, args...))
-}
-
-func (l *LoggerImpl) getCodeLine(skip int) string {
-	_, file, line, ok := runtime.Caller(skip + 1)
-	if !ok {
-		return "???:0"
-	}
-	pathParts := strings.Split(file, "/")
-	n := len(pathParts)
-	if n > 1 {
-		file = pathParts[n-2] + "/" + pathParts[n-1]
-	}
-	return file + ":" + strconv.Itoa(line)
 }
 
 //=================================================
