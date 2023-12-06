@@ -18,6 +18,19 @@ type Logger interface {
 
 type LEVEL int
 
+func (r LEVEL) String() string {
+	return levelMap[r]
+}
+
+var levelMap = map[LEVEL]string{
+	FATAL: "FATAL",
+	ERROR: "ERROR",
+	WARN:  "WARN",
+	INFO:  "INFO",
+	DEBUG: "DEBUG",
+	TRACE: "TRACE",
+}
+
 const (
 	FATAL LEVEL = iota
 	ERROR

@@ -14,7 +14,11 @@ var (
 	err io.Writer = os.Stderr
 )
 
-type LoggerImpl struct {
+type ConsoleLogger interface {
+	Logger
+}
+
+type ConsoleLoggerImpl struct {
 	// ALL > TRACE > DEBUG > INFO > WARN > ERROR > FATAL > OFF
 	// default YYYY-MM-DD HH:mm:ss.sss | ${prefix} | ${file} | ${level} :
 	Out    io.Writer
@@ -23,71 +27,71 @@ type LoggerImpl struct {
 	Level  LEVEL
 }
 
-func (l *LoggerImpl) Fatal(v ...any) {
+func (l *ConsoleLoggerImpl) Fatal(v ...any) {
 	if l.Level >= FATAL {
 		l.print(l.Err, 1, "FATAL", fmt.Sprint(v...))
 	}
 }
-func (l *LoggerImpl) Error(v ...any) {
+func (l *ConsoleLoggerImpl) Error(v ...any) {
 	if l.Level >= WARN {
 		l.print(l.Err, 1, "ERROR", fmt.Sprint(v...))
 	}
 }
-func (l *LoggerImpl) Warn(v ...any) {
+func (l *ConsoleLoggerImpl) Warn(v ...any) {
 	if l.Level >= ERROR {
 		l.print(l.Out, 1, "WARN", fmt.Sprint(v...))
 	}
 }
-func (l *LoggerImpl) Info(v ...any) {
+func (l *ConsoleLoggerImpl) Info(v ...any) {
 	if l.Level >= INFO {
 		l.print(l.Out, 1, "INFO", fmt.Sprint(v...))
 	}
 }
-func (l *LoggerImpl) Debug(v ...any) {
+func (l *ConsoleLoggerImpl) Debug(v ...any) {
 	if l.Level >= DEBUG {
 		l.print(l.Out, 1, "DEBUG", fmt.Sprint(v...))
 	}
 }
-func (l *LoggerImpl) Trace(v ...any) {
+func (l *ConsoleLoggerImpl) Trace(v ...any) {
 	if l.Level >= TRACE {
 		l.print(l.Out, 1, "TRACE", fmt.Sprint(v...))
 	}
 }
 
-func (l *LoggerImpl) Fatalf(format string, a ...any) {
+func (l *ConsoleLoggerImpl) Fatalf(format string, a ...any) {
 	if l.Level >= FATAL {
 		l.printf(l.Err, 1, "FATAL", format, a...)
 	}
 }
-func (l *LoggerImpl) Errorf(format string, a ...any) {
+func (l *ConsoleLoggerImpl) Errorf(format string, a ...any) {
 	if l.Level >= ERROR {
 		l.printf(l.Err, 1, "ERROR", format, a...)
 	}
 }
-func (l *LoggerImpl) Warnf(format string, a ...any) {
+func (l *ConsoleLoggerImpl) Warnf(format string, a ...any) {
 	if l.Level >= WARN {
 		l.printf(l.Out, 1, "WARN", format, a...)
 	}
 }
-func (l *LoggerImpl) Infof(format string, a ...any) {
+func (l *ConsoleLoggerImpl) Infof(format string, a ...any) {
 	if l.Level >= INFO {
 		l.printf(l.Out, 1, "INFO", format, a...)
 	}
 }
-func (l *LoggerImpl) Debugf(format string, a ...any) {
+func (l *ConsoleLoggerImpl) Debugf(format string, a ...any) {
 	if l.Level >= DEBUG {
 		l.printf(l.Out, 1, "DEBUG", format, a...)
 	}
 }
-func (l *LoggerImpl) Tracef(format string, a ...any) {
+func (l *ConsoleLoggerImpl) Tracef(format string, a ...any) {
 	if l.Level >= TRACE {
 		l.printf(l.Out, 1, "TRACE", format, a...)
 	}
 }
 
-func (l *LoggerImpl) Flush() {}
+func (l *ConsoleLoggerImpl) Flush() {}
 
-func (l *LoggerImpl) print(w io.Writer, skip int, level string, v string) {
+func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, level string, v string) {
 	buf := bytes.Buffer{}
 	buf.WriteString(time.Now().Format("2006-01-02 15:04:05.999"))
 	if l.Prefix != "" {
@@ -106,26 +110,26 @@ func (l *LoggerImpl) print(w io.Writer, skip int, level string, v string) {
 	_, _ = buf.WriteTo(w)
 }
 
-func (l *LoggerImpl) printf(w io.Writer, skip int, level, format string, args ...any) {
+func (l *ConsoleLoggerImpl) printf(w io.Writer, skip int, level, format string, args ...any) {
 	l.print(w, skip+1, level, fmt.Sprintf(format, args...))
 }
 
 //=================================================
 
-var defaultLoggerImpl = LoggerImpl{
+var defaultConsoleLoggerImpl = ConsoleLoggerImpl{
 	Out:    out,
 	Err:    err,
 	Prefix: "",
 }
 
-func NewLogger(level LEVEL) Logger {
-	l := defaultLoggerImpl
+func NewConsoleLogger(level LEVEL) Logger {
+	l := defaultConsoleLoggerImpl
 	l.Level = level
 	return &l
 }
 
-func NewLoggerWithWriter(out, err io.Writer, level LEVEL) Logger {
-	l := defaultLoggerImpl
+func NewConsoleLoggerWithWriter(out, err io.Writer, level LEVEL) Logger {
+	l := defaultConsoleLoggerImpl
 	l.Out = out
 	l.Err = err
 	l.Level = level
