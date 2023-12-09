@@ -18,3 +18,16 @@ func GetSourceLine(skip int) string {
 	}
 	return file + ":" + strconv.Itoa(line)
 }
+
+func GetFileName(skip int) string {
+	_, file, _, ok := runtime.Caller(skip + 1)
+	if !ok {
+		return "unknown"
+	}
+	pathParts := strings.Split(file, "/")
+	n := len(pathParts)
+	if n > 1 {
+		file = pathParts[n-1]
+	}
+	return file
+}
