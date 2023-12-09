@@ -33,12 +33,12 @@ func (l *ConsoleLoggerImpl) Fatal(v ...any) {
 	}
 }
 func (l *ConsoleLoggerImpl) Error(v ...any) {
-	if l.Level >= WARN {
+	if l.Level >= ERROR {
 		l.print(l.Err, 1, "ERROR", fmt.Sprint(v...))
 	}
 }
 func (l *ConsoleLoggerImpl) Warn(v ...any) {
-	if l.Level >= ERROR {
+	if l.Level >= WARN {
 		l.print(l.Out, 1, "WARN", fmt.Sprint(v...))
 	}
 }
