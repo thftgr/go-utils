@@ -19,8 +19,11 @@ type GormRepository[E Entity[ID], ID Id] interface {
 }
 
 type GormRepositoryImpl[E GormEntity[ID], ID GormEntityId] struct {
-	Model E        // 제너릭을 통해 자동 설정됨.
-	DB    *gorm.DB // 필수로 추가해야함
+	DB *gorm.DB // 필수로 추가해야함
+}
+
+func NewGormRepository[E GormEntity[ID], ID GormEntityId](tx *gorm.DB) GormRepository[E, ID] {
+	return &GormRepositoryImpl[E, ID]{DB: tx}
 }
 
 func (r *GormRepositoryImpl[E, ID]) Save(e E) error {
