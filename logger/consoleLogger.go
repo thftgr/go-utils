@@ -15,7 +15,7 @@ var (
 )
 
 type ConsoleLogger interface {
-	Logger
+	SkipLogger
 }
 
 type ConsoleLoggerImpl struct {
@@ -27,71 +27,40 @@ type ConsoleLoggerImpl struct {
 	Level  LEVEL
 }
 
-func (l *ConsoleLoggerImpl) Fatal(v ...any) {
-	if l.Level >= FATAL {
-		l.print(l.Err, 1, "FATAL", fmt.Sprint(v...))
-	}
-}
-func (l *ConsoleLoggerImpl) Error(v ...any) {
-	if l.Level >= ERROR {
-		l.print(l.Err, 1, "ERROR", fmt.Sprint(v...))
-	}
-}
-func (l *ConsoleLoggerImpl) Warn(v ...any) {
-	if l.Level >= WARN {
-		l.print(l.Out, 1, "WARN", fmt.Sprint(v...))
-	}
-}
-func (l *ConsoleLoggerImpl) Info(v ...any) {
-	if l.Level >= INFO {
-		l.print(l.Out, 1, "INFO", fmt.Sprint(v...))
-	}
-}
-func (l *ConsoleLoggerImpl) Debug(v ...any) {
-	if l.Level >= DEBUG {
-		l.print(l.Out, 1, "DEBUG", fmt.Sprint(v...))
-	}
-}
-func (l *ConsoleLoggerImpl) Trace(v ...any) {
-	if l.Level >= TRACE {
-		l.print(l.Out, 1, "TRACE", fmt.Sprint(v...))
-	}
-}
+func (l *ConsoleLoggerImpl) Fatal(v ...any) { l.SFatal(1, v...) }
+func (l *ConsoleLoggerImpl) Error(v ...any) { l.SError(1, v...) }
+func (l *ConsoleLoggerImpl) Warn(v ...any)  { l.SWarn(1, v...) }
+func (l *ConsoleLoggerImpl) Info(v ...any)  { l.SInfo(1, v...) }
+func (l *ConsoleLoggerImpl) Debug(v ...any) { l.SDebug(1, v...) }
+func (l *ConsoleLoggerImpl) Trace(v ...any) { l.STrace(1, v...) }
 
-func (l *ConsoleLoggerImpl) Fatalf(format string, a ...any) {
-	if l.Level >= FATAL {
-		l.printf(l.Err, 1, "FATAL", format, a...)
-	}
-}
-func (l *ConsoleLoggerImpl) Errorf(format string, a ...any) {
-	if l.Level >= ERROR {
-		l.printf(l.Err, 1, "ERROR", format, a...)
-	}
-}
-func (l *ConsoleLoggerImpl) Warnf(format string, a ...any) {
-	if l.Level >= WARN {
-		l.printf(l.Out, 1, "WARN", format, a...)
-	}
-}
-func (l *ConsoleLoggerImpl) Infof(format string, a ...any) {
-	if l.Level >= INFO {
-		l.printf(l.Out, 1, "INFO", format, a...)
-	}
-}
-func (l *ConsoleLoggerImpl) Debugf(format string, a ...any) {
-	if l.Level >= DEBUG {
-		l.printf(l.Out, 1, "DEBUG", format, a...)
-	}
-}
-func (l *ConsoleLoggerImpl) Tracef(format string, a ...any) {
-	if l.Level >= TRACE {
-		l.printf(l.Out, 1, "TRACE", format, a...)
-	}
-}
+func (l *ConsoleLoggerImpl) Fatalf(f string, a ...any) { l.SFatalf(1, f, a...) }
+func (l *ConsoleLoggerImpl) Errorf(f string, a ...any) { l.SErrorf(1, f, a...) }
+func (l *ConsoleLoggerImpl) Warnf(f string, a ...any)  { l.SWarnf(1, f, a...) }
+func (l *ConsoleLoggerImpl) Infof(f string, a ...any)  { l.SInfof(1, f, a...) }
+func (l *ConsoleLoggerImpl) Debugf(f string, a ...any) { l.SDebugf(1, f, a...) }
+func (l *ConsoleLoggerImpl) Tracef(f string, a ...any) { l.STracef(1, f, a...) }
+
+func (l *ConsoleLoggerImpl) SFatal(s int, v ...any) { l.print(l.Err, s+1, FATAL, v...) }
+func (l *ConsoleLoggerImpl) SError(s int, v ...any) { l.print(l.Err, s+1, ERROR, v...) }
+func (l *ConsoleLoggerImpl) SWarn(s int, v ...any)  { l.print(l.Out, s+1, WARN, v...) }
+func (l *ConsoleLoggerImpl) SInfo(s int, v ...any)  { l.print(l.Out, s+1, INFO, v...) }
+func (l *ConsoleLoggerImpl) SDebug(s int, v ...any) { l.print(l.Out, s+1, DEBUG, v...) }
+func (l *ConsoleLoggerImpl) STrace(s int, v ...any) { l.print(l.Out, s+1, TRACE, v...) }
+
+func (l *ConsoleLoggerImpl) SFatalf(s int, f string, a ...any) { l.printf(l.Err, s+1, FATAL, f, a...) }
+func (l *ConsoleLoggerImpl) SErrorf(s int, f string, a ...any) { l.printf(l.Err, s+1, ERROR, f, a...) }
+func (l *ConsoleLoggerImpl) SWarnf(s int, f string, a ...any)  { l.printf(l.Out, s+1, WARN, f, a...) }
+func (l *ConsoleLoggerImpl) SInfof(s int, f string, a ...any)  { l.printf(l.Out, s+1, INFO, f, a...) }
+func (l *ConsoleLoggerImpl) SDebugf(s int, f string, a ...any) { l.printf(l.Out, s+1, DEBUG, f, a...) }
+func (l *ConsoleLoggerImpl) STracef(s int, f string, a ...any) { l.printf(l.Out, s+1, TRACE, f, a...) }
 
 func (l *ConsoleLoggerImpl) Flush() {}
 
-func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, level string, v string) {
+func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, lvl LEVEL, v ...any) {
+	if l.Level >= lvl {
+		return
+	}
 	buf := bytes.Buffer{}
 	buf.WriteString(time.Now().Format("2006-01-02 15:04:05.999"))
 	if l.Prefix != "" {
@@ -103,15 +72,15 @@ func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, level string, v string)
 		buf.WriteString(utils.GetSourceLine(skip + 1))
 	}
 	buf.WriteString(" | ")
-	buf.WriteString(level)
+	buf.WriteString(lvl.String())
 	buf.WriteString(" | ")
-	buf.WriteString(v)
+	buf.WriteString(fmt.Sprint(v...))
 	buf.WriteString("\n")
 	_, _ = buf.WriteTo(w)
 }
 
-func (l *ConsoleLoggerImpl) printf(w io.Writer, skip int, level, format string, args ...any) {
-	l.print(w, skip+1, level, fmt.Sprintf(format, args...))
+func (l *ConsoleLoggerImpl) printf(w io.Writer, skip int, lvl LEVEL, format string, args ...any) {
+	l.print(w, skip+1, lvl, fmt.Sprintf(format, args...))
 }
 
 //=================================================
