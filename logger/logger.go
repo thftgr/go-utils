@@ -16,13 +16,29 @@ type Logger interface {
 	Flush()
 }
 
+type SkipLogger interface {
+	Logger
+	STrace(skip int, v ...any)
+	SDebug(skip int, v ...any)
+	SInfo(skip int, v ...any)
+	SWarn(skip int, v ...any)
+	SError(skip int, v ...any)
+	SFatal(skip int, v ...any)
+	STracef(skip int, format string, v ...any)
+	SDebugf(skip int, format string, v ...any)
+	SInfof(skip int, format string, v ...any)
+	SWarnf(skip int, format string, v ...any)
+	SErrorf(skip int, format string, v ...any)
+	SFatalf(skip int, format string, v ...any)
+}
+
 type LEVEL int
 
 func (r LEVEL) String() string {
 	return levelMap[r]
 }
 
-var levelMap = map[LEVEL]string{
+var levelMap = []string{
 	FATAL: "FATAL",
 	ERROR: "ERROR",
 	WARN:  "WARN",
