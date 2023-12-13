@@ -14,7 +14,7 @@ type GormEntity[ID GormEntityId] interface {
 	TableName() string
 }
 
-type GormRepository[E Entity[ID], ID Id] interface {
+type GormRepository[E GormEntity[ID], ID GormEntityId] interface {
 	CrudRepository[E, ID]
 }
 
