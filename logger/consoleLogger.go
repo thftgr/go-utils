@@ -57,8 +57,8 @@ func (l *ConsoleLoggerImpl) STracef(s int, f string, a ...any) { l.printf(l.Out,
 
 func (l *ConsoleLoggerImpl) Flush() {}
 
-func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, lvl LEVEL, v ...any) {
-	if l.Level >= lvl {
+func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, level LEVEL, v ...any) {
+	if !l.Level.IsLevelAtLeast(level) {
 		return
 	}
 	buf := bytes.Buffer{}
@@ -72,7 +72,7 @@ func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, lvl LEVEL, v ...any) {
 		buf.WriteString(utils.GetSourceLine(skip + 1))
 	}
 	buf.WriteString(" | ")
-	buf.WriteString(lvl.String())
+	buf.WriteString(level.String())
 	buf.WriteString(" | ")
 	_, _ = fmt.Fprint(&buf, v...)
 	buf.WriteString("\n")

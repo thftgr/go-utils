@@ -38,20 +38,26 @@ func (r LEVEL) String() string {
 	return levelMap[r]
 }
 
+func (r LEVEL) IsLevelAtLeast(level LEVEL) bool {
+	// INFO(2) <= DEBUG(1) -> false
+	// INFO(2) <= INFO(2) -> true
+	return r <= level
+}
+
 var levelMap = []string{
-	FATAL: "FATAL",
-	ERROR: "ERROR",
-	WARN:  "WARN",
-	INFO:  "INFO",
-	DEBUG: "DEBUG",
 	TRACE: "TRACE",
+	DEBUG: "DEBUG",
+	INFO:  "INFO",
+	WARN:  "WARN",
+	ERROR: "ERROR",
+	FATAL: "FATAL",
 }
 
 const (
-	FATAL LEVEL = iota
-	ERROR
-	WARN
-	INFO
+	TRACE LEVEL = iota
 	DEBUG
-	TRACE
+	INFO
+	WARN
+	ERROR
+	FATAL
 )
