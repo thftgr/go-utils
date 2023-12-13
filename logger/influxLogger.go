@@ -55,8 +55,8 @@ func (l *InfluxLoggerImpl) Flush() {
 	l.writer.Flush()
 }
 
-func (l *InfluxLoggerImpl) print(skip int, lvl LEVEL, v ...any) {
-	if l.Level >= lvl {
+func (l *InfluxLoggerImpl) print(skip int, level LEVEL, v ...any) {
+	if !l.Level.IsLevelAtLeast(level) {
 		return
 	}
 	buf := bytes.Buffer{}
@@ -70,11 +70,11 @@ func (l *InfluxLoggerImpl) print(skip int, lvl LEVEL, v ...any) {
 		buf.WriteString(utils.GetSourceLine(skip + 1))
 	}
 	buf.WriteString(" | ")
-	buf.WriteString(lvl.String())
+	buf.WriteString(level.String())
 	buf.WriteString(" | ")
 	_, _ = fmt.Fprint(&buf, v...)
 	buf.WriteString("\n")
-	l.post(lvl, buf.String())
+	l.post(level, buf.String())
 }
 
 func (l *InfluxLoggerImpl) printf(skip int, lvl LEVEL, format string, args ...any) {
