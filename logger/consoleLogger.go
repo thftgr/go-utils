@@ -74,7 +74,7 @@ func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, lvl LEVEL, v ...any) {
 	buf.WriteString(" | ")
 	buf.WriteString(lvl.String())
 	buf.WriteString(" | ")
-	buf.WriteString(fmt.Sprint(v...))
+	_, _ = fmt.Fprint(&buf, v...)
 	buf.WriteString("\n")
 	_, _ = buf.WriteTo(w)
 }

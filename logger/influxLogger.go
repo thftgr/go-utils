@@ -72,7 +72,7 @@ func (l *InfluxLoggerImpl) print(skip int, lvl LEVEL, v ...any) {
 	buf.WriteString(" | ")
 	buf.WriteString(lvl.String())
 	buf.WriteString(" | ")
-	buf.WriteString(fmt.Sprint(v...))
+	_, _ = fmt.Fprint(&buf, v...)
 	buf.WriteString("\n")
 	l.post(lvl, buf.String())
 }
