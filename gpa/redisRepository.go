@@ -32,6 +32,10 @@ type RedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId] struct {
 	pipe redis.Pipeliner // 필수로 추가해야함
 }
 
+func NewRedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId](ctx context.Context, pipe redis.Pipeliner) *RedisRepositoryImpl[E, ID] {
+	return &RedisRepositoryImpl[E, ID]{ctx: ctx, pipe: pipe}
+}
+
 func NewRedisRepository[E RedisEntity[ID], ID RedisEntityId](ctx context.Context, pipe redis.Pipeliner) RedisRepository[E, ID] {
 	return &RedisRepositoryImpl[E, ID]{ctx: ctx, pipe: pipe}
 }

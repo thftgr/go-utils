@@ -22,6 +22,10 @@ type GormRepositoryImpl[E GormEntity[ID], ID GormEntityId] struct {
 	db *gorm.DB // 필수로 추가해야함
 }
 
+func NewGormRepositoryImpl[E GormEntity[ID], ID GormEntityId](tx *gorm.DB) *GormRepositoryImpl[E, ID] {
+	return &GormRepositoryImpl[E, ID]{db: tx}
+}
+
 func NewGormRepository[E GormEntity[ID], ID GormEntityId](tx *gorm.DB) GormRepository[E, ID] {
 	return &GormRepositoryImpl[E, ID]{db: tx}
 }
