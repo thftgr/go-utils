@@ -28,27 +28,29 @@ type RedisRepository[E RedisEntity[ID], ID RedisEntityId] interface {
 
 type RedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId] struct {
 	ctx   context.Context
-	Model E             // 제너릭을 통해 자동 설정됨.
-	DB    *redis.Client // 필수로 추가해야함
+	Model E               // 제너릭을 통해 자동 설정됨.
+	pipe  redis.Pipeliner // 필수로 추가해야함
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Save(e E) error {
-	return r.DB.HMSet(r.ctx, e.GetId().ToString(), e).Err()
+	return r.pipe.HMSet(r.ctx, e.GetId().ToString(), e).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) SaveAll(e ...E) (count int64, err error) {
 	for i := range e {
-		err = r.Save(e[i])
-		if err != nil {
+		err2 := r.pipe.HMSet(r.ctx, e[i].GetId().ToString(), e[i]).Err()
+		if err2 != nil {
+			err = err2
 			return
 		}
 		count++
 	}
+	_, err = r.pipe.Exec(r.ctx)
 	return
 }
 
 func (r *RedisRepositoryImpl[E, ID]) FindById(id ID) (e E, err error) {
-	err = r.DB.HMGet(r.ctx, id.ToString()).Scan(&e)
+	err = r.pipe.HMGet(r.ctx, id.ToString()).Scan(&e)
 	return
 }
 
@@ -65,7 +67,7 @@ func (r *RedisRepositoryImpl[E, ID]) FindAllById(id ...ID) (res []E, err error) 
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Delete(e E) error {
-	return r.DB.Del(r.ctx, e.GetId().ToString()).Err()
+	return r.pipe.Del(r.ctx, e.GetId().ToString()).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteAll(e ...E) (count int64, err error) {
@@ -73,12 +75,12 @@ func (r *RedisRepositoryImpl[E, ID]) DeleteAll(e ...E) (count int64, err error) 
 	for i := range e {
 		ids[i] = e[i].GetId().ToString()
 	}
-	return r.DB.Del(r.ctx, ids...).Result()
+	return r.pipe.Del(r.ctx, ids...).Result()
 
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteById(id ID) error {
-	return r.DB.Del(r.ctx, id.ToString()).Err()
+	return r.pipe.Del(r.ctx, id.ToString()).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteAllById(id ...ID) (count int64, err error) {
@@ -86,5 +88,5 @@ func (r *RedisRepositoryImpl[E, ID]) DeleteAllById(id ...ID) (count int64, err e
 	for i := range id {
 		ids[i] = id[i].ToString()
 	}
-	return r.DB.Del(r.ctx, ids...).Result()
+	return r.pipe.Del(r.ctx, ids...).Result()
 }
