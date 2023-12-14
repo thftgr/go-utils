@@ -1,17 +1,18 @@
-package gpa
+package redisRepository
 
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
+	"github.com/thftgr/go-utils/gpa"
 )
 
 type RedisEntityId interface {
-	Id
+	gpa.Id
 	ToString() string // redis key 가 string 임.
 }
 
 type RedisEntity[ID RedisEntityId] interface {
-	Entity[ID]
+	gpa.Entity[ID]
 	GetKey() string
 
 	// 필요한 경우 아래 두 인터페이스를 구현할것.
@@ -24,7 +25,7 @@ type RedisEntity[ID RedisEntityId] interface {
 }
 
 type RedisRepository[E RedisEntity[ID], ID RedisEntityId] interface {
-	CrudRepository[E, ID]
+	gpa.CrudRepository[E, ID]
 }
 
 type RedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId] struct {

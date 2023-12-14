@@ -1,4 +1,4 @@
-package logger
+package influxLogger
 
 import (
 	"bytes"
@@ -6,20 +6,21 @@ import (
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	protocol "github.com/influxdata/line-protocol"
+	"github.com/thftgr/go-utils/logger"
 	"github.com/thftgr/go-utils/utils"
 	"os"
 	"time"
 )
 
 type InfluxLogger interface {
-	SkipLogger
+	logger.SkipLogger
 }
 
 type InfluxLoggerImpl struct {
 	tags        []protocol.Tag
 	writer      api.WriteAPI
 	Prefix      string
-	Level       LEVEL
+	Level       logger.LEVEL
 	ServiceName string
 }
 
@@ -37,25 +38,25 @@ func (l *InfluxLoggerImpl) Infof(f string, a ...any)  { l.SInfof(1, f, a...) }
 func (l *InfluxLoggerImpl) Debugf(f string, a ...any) { l.SDebugf(1, f, a...) }
 func (l *InfluxLoggerImpl) Tracef(f string, a ...any) { l.STracef(1, f, a...) }
 
-func (l *InfluxLoggerImpl) SFatal(s int, v ...any) { l.print(s+1, FATAL, v...) }
-func (l *InfluxLoggerImpl) SError(s int, v ...any) { l.print(s+1, ERROR, v...) }
-func (l *InfluxLoggerImpl) SWarn(s int, v ...any)  { l.print(s+1, WARN, v...) }
-func (l *InfluxLoggerImpl) SInfo(s int, v ...any)  { l.print(s+1, INFO, v...) }
-func (l *InfluxLoggerImpl) SDebug(s int, v ...any) { l.print(s+1, DEBUG, v...) }
-func (l *InfluxLoggerImpl) STrace(s int, v ...any) { l.print(s+1, TRACE, v...) }
+func (l *InfluxLoggerImpl) SFatal(s int, v ...any) { l.print(s+1, logger.FATAL, v...) }
+func (l *InfluxLoggerImpl) SError(s int, v ...any) { l.print(s+1, logger.ERROR, v...) }
+func (l *InfluxLoggerImpl) SWarn(s int, v ...any)  { l.print(s+1, logger.WARN, v...) }
+func (l *InfluxLoggerImpl) SInfo(s int, v ...any)  { l.print(s+1, logger.INFO, v...) }
+func (l *InfluxLoggerImpl) SDebug(s int, v ...any) { l.print(s+1, logger.DEBUG, v...) }
+func (l *InfluxLoggerImpl) STrace(s int, v ...any) { l.print(s+1, logger.TRACE, v...) }
 
-func (l *InfluxLoggerImpl) SFatalf(s int, f string, a ...any) { l.printf(s+1, FATAL, f, a...) }
-func (l *InfluxLoggerImpl) SErrorf(s int, f string, a ...any) { l.printf(s+1, ERROR, f, a...) }
-func (l *InfluxLoggerImpl) SWarnf(s int, f string, a ...any)  { l.printf(s+1, WARN, f, a...) }
-func (l *InfluxLoggerImpl) SInfof(s int, f string, a ...any)  { l.printf(s+1, INFO, f, a...) }
-func (l *InfluxLoggerImpl) SDebugf(s int, f string, a ...any) { l.printf(s+1, DEBUG, f, a...) }
-func (l *InfluxLoggerImpl) STracef(s int, f string, a ...any) { l.printf(s+1, TRACE, f, a...) }
+func (l *InfluxLoggerImpl) SFatalf(s int, f string, a ...any) { l.printf(s+1, logger.FATAL, f, a...) }
+func (l *InfluxLoggerImpl) SErrorf(s int, f string, a ...any) { l.printf(s+1, logger.ERROR, f, a...) }
+func (l *InfluxLoggerImpl) SWarnf(s int, f string, a ...any)  { l.printf(s+1, logger.WARN, f, a...) }
+func (l *InfluxLoggerImpl) SInfof(s int, f string, a ...any)  { l.printf(s+1, logger.INFO, f, a...) }
+func (l *InfluxLoggerImpl) SDebugf(s int, f string, a ...any) { l.printf(s+1, logger.DEBUG, f, a...) }
+func (l *InfluxLoggerImpl) STracef(s int, f string, a ...any) { l.printf(s+1, logger.TRACE, f, a...) }
 
 func (l *InfluxLoggerImpl) Flush() {
 	l.writer.Flush()
 }
 
-func (l *InfluxLoggerImpl) print(skip int, level LEVEL, v ...any) {
+func (l *InfluxLoggerImpl) print(skip int, level logger.LEVEL, v ...any) {
 	if !l.Level.IsLevelAtLeast(level) {
 		return
 	}
@@ -77,11 +78,11 @@ func (l *InfluxLoggerImpl) print(skip int, level LEVEL, v ...any) {
 	l.post(level, buf.String())
 }
 
-func (l *InfluxLoggerImpl) printf(skip int, lvl LEVEL, format string, args ...any) {
+func (l *InfluxLoggerImpl) printf(skip int, lvl logger.LEVEL, format string, args ...any) {
 	l.print(skip+1, lvl, fmt.Sprintf(format, args...))
 }
 
-func (l *InfluxLoggerImpl) post(level LEVEL, data string) {
+func (l *InfluxLoggerImpl) post(level logger.LEVEL, data string) {
 	point := influxdb2.NewPointWithMeasurement("log").SetTime(time.Now())
 	for i := range l.tags {
 		point.AddTag(l.tags[i].Key, l.tags[i].Value)
@@ -94,7 +95,7 @@ func (l *InfluxLoggerImpl) post(level LEVEL, data string) {
 
 //=================================================
 
-func NewInfluxLoggerImpl(tags []protocol.Tag, writer api.WriteAPI, level LEVEL, serviceName string) *InfluxLoggerImpl {
+func NewInfluxLoggerImpl(tags []protocol.Tag, writer api.WriteAPI, level logger.LEVEL, serviceName string) *InfluxLoggerImpl {
 	return &InfluxLoggerImpl{
 		tags:        tags,
 		writer:      writer,
@@ -102,7 +103,7 @@ func NewInfluxLoggerImpl(tags []protocol.Tag, writer api.WriteAPI, level LEVEL, 
 		ServiceName: serviceName,
 	}
 }
-func NewInfluxLoggerImpl2(writer api.WriteAPI, level LEVEL, serviceName string) *InfluxLoggerImpl {
+func NewInfluxLoggerImpl2(writer api.WriteAPI, level logger.LEVEL, serviceName string) *InfluxLoggerImpl {
 	return &InfluxLoggerImpl{
 		tags: []protocol.Tag{
 			{"hostname", os.Getenv("HOSTNAME")},
@@ -118,7 +119,7 @@ func NewInfluxLoggerImpl3(writer api.WriteAPI, serviceName string) *InfluxLogger
 			{"hostname", os.Getenv("HOSTNAME")},
 		},
 		writer:      writer,
-		Level:       INFO,
+		Level:       logger.INFO,
 		ServiceName: serviceName,
 	}
 }

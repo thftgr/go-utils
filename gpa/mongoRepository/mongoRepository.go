@@ -1,23 +1,24 @@
-package gpa
+package mongoRepository
 
 import (
 	"context"
+	"github.com/thftgr/go-utils/gpa"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoEntityId interface {
-	Id
+	gpa.Id
 }
 
 type MongoEntity[ID MongoEntityId] interface {
-	Entity[ID]
+	gpa.Entity[ID]
 	Collection() string
 }
 
 type MongoRepository[E MongoEntity[ID], ID MongoEntityId] interface {
-	CrudRepository[E, ID]
+	gpa.CrudRepository[E, ID]
 }
 
 type MongoRepositoryImpl[E MongoEntity[ID], ID MongoEntityId] struct {
