@@ -1,21 +1,22 @@
-package gpa
+package gormRepository
 
 import (
+	"github.com/thftgr/go-utils/gpa"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type GormEntityId interface {
-	Id
+	gpa.Id
 }
 
 type GormEntity[ID GormEntityId] interface {
-	Entity[ID]
+	gpa.Entity[ID]
 	TableName() string
 }
 
 type GormRepository[E GormEntity[ID], ID GormEntityId] interface {
-	CrudRepository[E, ID]
+	gpa.CrudRepository[E, ID]
 }
 
 type GormRepositoryImpl[E GormEntity[ID], ID GormEntityId] struct {

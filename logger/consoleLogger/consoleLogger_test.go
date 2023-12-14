@@ -1,6 +1,7 @@
-package logger
+package consoleLogger
 
 import (
+	"github.com/thftgr/go-utils/logger"
 	"io"
 	"os"
 	"testing"
@@ -11,7 +12,7 @@ func TestConsoleLoggerImpl_default(t *testing.T) {
 		Out    io.Writer
 		Err    io.Writer
 		Prefix string
-		Level  LEVEL
+		Level  logger.LEVEL
 	}
 	type args struct {
 		v []any
@@ -21,12 +22,12 @@ func TestConsoleLoggerImpl_default(t *testing.T) {
 		fields fields
 		args   args
 	}{
-		{"TEST_LEVEL: FATAL", fields{os.Stdout, os.Stderr, "PREFIX", FATAL}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: ERROR", fields{os.Stdout, os.Stderr, "PREFIX", ERROR}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: WARN", fields{os.Stdout, os.Stderr, "PREFIX", WARN}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: INFO", fields{os.Stdout, os.Stderr, "PREFIX", INFO}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: DEBUG", fields{os.Stdout, os.Stderr, "PREFIX", DEBUG}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: TRACE", fields{os.Stdout, os.Stderr, "PREFIX", TRACE}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: FATAL", fields{os.Stdout, os.Stderr, "PREFIX", logger.FATAL}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: ERROR", fields{os.Stdout, os.Stderr, "PREFIX", logger.ERROR}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: WARN", fields{os.Stdout, os.Stderr, "PREFIX", logger.WARN}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: INFO", fields{os.Stdout, os.Stderr, "PREFIX", logger.INFO}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: DEBUG", fields{os.Stdout, os.Stderr, "PREFIX", logger.DEBUG}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: TRACE", fields{os.Stdout, os.Stderr, "PREFIX", logger.TRACE}, args{[]any{"HELLO!"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -51,7 +52,7 @@ func TestConsoleLoggerImpl_Format(t *testing.T) {
 		Out    io.Writer
 		Err    io.Writer
 		Prefix string
-		Level  LEVEL
+		Level  logger.LEVEL
 	}
 	type args struct {
 		farmat string
@@ -62,12 +63,12 @@ func TestConsoleLoggerImpl_Format(t *testing.T) {
 		fields fields
 		args   args
 	}{
-		{"TEST_LEVEL: FATAL", fields{os.Stdout, os.Stderr, "PREFIX", FATAL}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: ERROR", fields{os.Stdout, os.Stderr, "PREFIX", ERROR}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: WARN", fields{os.Stdout, os.Stderr, "PREFIX", WARN}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: INFO", fields{os.Stdout, os.Stderr, "PREFIX", INFO}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: DEBUG", fields{os.Stdout, os.Stderr, "PREFIX", DEBUG}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: TRACE", fields{os.Stdout, os.Stderr, "PREFIX", TRACE}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: FATAL", fields{os.Stdout, os.Stderr, "PREFIX", logger.FATAL}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: ERROR", fields{os.Stdout, os.Stderr, "PREFIX", logger.ERROR}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: WARN", fields{os.Stdout, os.Stderr, "PREFIX", logger.WARN}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: INFO", fields{os.Stdout, os.Stderr, "PREFIX", logger.INFO}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: DEBUG", fields{os.Stdout, os.Stderr, "PREFIX", logger.DEBUG}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: TRACE", fields{os.Stdout, os.Stderr, "PREFIX", logger.TRACE}, args{"arg:[%s]", []any{"HELLO!"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -92,7 +93,7 @@ func TestConsoleLoggerImpl_Skip(t *testing.T) {
 		Out    io.Writer
 		Err    io.Writer
 		Prefix string
-		Level  LEVEL
+		Level  logger.LEVEL
 	}
 	type args struct {
 		v []any
@@ -102,12 +103,12 @@ func TestConsoleLoggerImpl_Skip(t *testing.T) {
 		fields fields
 		args   args
 	}{
-		{"TEST_LEVEL: FATAL", fields{os.Stdout, os.Stderr, "PREFIX", FATAL}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: ERROR", fields{os.Stdout, os.Stderr, "PREFIX", ERROR}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: WARN", fields{os.Stdout, os.Stderr, "PREFIX", WARN}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: INFO", fields{os.Stdout, os.Stderr, "PREFIX", INFO}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: DEBUG", fields{os.Stdout, os.Stderr, "PREFIX", DEBUG}, args{[]any{"HELLO!"}}},
-		{"TEST_LEVEL: TRACE", fields{os.Stdout, os.Stderr, "PREFIX", TRACE}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: FATAL", fields{os.Stdout, os.Stderr, "PREFIX", logger.FATAL}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: ERROR", fields{os.Stdout, os.Stderr, "PREFIX", logger.ERROR}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: WARN", fields{os.Stdout, os.Stderr, "PREFIX", logger.WARN}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: INFO", fields{os.Stdout, os.Stderr, "PREFIX", logger.INFO}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: DEBUG", fields{os.Stdout, os.Stderr, "PREFIX", logger.DEBUG}, args{[]any{"HELLO!"}}},
+		{"TEST_LEVEL: TRACE", fields{os.Stdout, os.Stderr, "PREFIX", logger.TRACE}, args{[]any{"HELLO!"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -132,7 +133,7 @@ func TestConsoleLoggerImpl_SkipFormat(t *testing.T) {
 		Out    io.Writer
 		Err    io.Writer
 		Prefix string
-		Level  LEVEL
+		Level  logger.LEVEL
 	}
 	type args struct {
 		farmat string
@@ -143,12 +144,12 @@ func TestConsoleLoggerImpl_SkipFormat(t *testing.T) {
 		fields fields
 		args   args
 	}{
-		{"TEST_LEVEL: FATAL", fields{os.Stdout, os.Stderr, "PREFIX", FATAL}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: ERROR", fields{os.Stdout, os.Stderr, "PREFIX", ERROR}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: WARN", fields{os.Stdout, os.Stderr, "PREFIX", WARN}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: INFO", fields{os.Stdout, os.Stderr, "PREFIX", INFO}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: DEBUG", fields{os.Stdout, os.Stderr, "PREFIX", DEBUG}, args{"arg:[%s]", []any{"HELLO!"}}},
-		{"TEST_LEVEL: TRACE", fields{os.Stdout, os.Stderr, "PREFIX", TRACE}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: FATAL", fields{os.Stdout, os.Stderr, "PREFIX", logger.FATAL}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: ERROR", fields{os.Stdout, os.Stderr, "PREFIX", logger.ERROR}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: WARN", fields{os.Stdout, os.Stderr, "PREFIX", logger.WARN}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: INFO", fields{os.Stdout, os.Stderr, "PREFIX", logger.INFO}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: DEBUG", fields{os.Stdout, os.Stderr, "PREFIX", logger.DEBUG}, args{"arg:[%s]", []any{"HELLO!"}}},
+		{"TEST_LEVEL: TRACE", fields{os.Stdout, os.Stderr, "PREFIX", logger.TRACE}, args{"arg:[%s]", []any{"HELLO!"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
