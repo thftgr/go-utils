@@ -11,7 +11,8 @@ type InfluxEntity[ID InfluxEntityId] interface {
 }
 
 type InfluxRepository[E InfluxEntity[ID], ID InfluxEntityId] interface {
+	gpa.CrudRepository[E, ID]
 }
 
-type InfluxRepositoryImpl[E InfluxEntity[ID], ID InfluxEntityId] struct {
-}
+//type InfluxRepositoryImpl[E InfluxEntity[ID], ID InfluxEntityId] struct {
+//}
