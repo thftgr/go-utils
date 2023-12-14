@@ -25,7 +25,7 @@ type MongoRepositoryImpl[E MongoEntity[ID], ID MongoEntityId] struct {
 	ctx        context.Context
 }
 
-func NewMongoRepositoryImpl[E MongoEntity[ID], ID MongoEntityId](collection *mongo.Collection, ctx context.Context) *MongoRepositoryImpl[E, ID] {
+func NewMongoRepository[E MongoEntity[ID], ID MongoEntityId](collection *mongo.Collection, ctx context.Context) MongoRepository[E, ID] {
 	return &MongoRepositoryImpl[E, ID]{collection: collection, ctx: ctx}
 }
 
