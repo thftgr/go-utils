@@ -12,6 +12,7 @@ type RedisEntityId interface {
 
 type RedisEntity[ID RedisEntityId] interface {
 	Entity[ID]
+	GetKey() string
 
 	// 필요한 경우 아래 두 인터페이스를 구현할것.
 	//json.Marshaler
@@ -33,12 +34,12 @@ type RedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId] struct {
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Save(e E) error {
-	return r.pipe.HMSet(r.ctx, e.GetId().ToString(), e).Err()
+	return r.pipe.HMSet(r.ctx, e.GetKey(), e).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) SaveAll(e ...E) (count int64, err error) {
 	for i := range e {
-		err2 := r.pipe.HMSet(r.ctx, e[i].GetId().ToString(), e[i]).Err()
+		err2 := r.pipe.HMSet(r.ctx, e[i].GetKey(), e[i]).Err()
 		if err2 != nil {
 			err = err2
 			return
@@ -67,13 +68,13 @@ func (r *RedisRepositoryImpl[E, ID]) FindAllById(id ...ID) (res []E, err error) 
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Delete(e E) error {
-	return r.pipe.Del(r.ctx, e.GetId().ToString()).Err()
+	return r.pipe.Del(r.ctx, e.GetKey()).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteAll(e ...E) (count int64, err error) {
 	ids := make([]string, len(e))
 	for i := range e {
-		ids[i] = e[i].GetId().ToString()
+		ids[i] = e[i].GetKey()
 	}
 	return r.pipe.Del(r.ctx, ids...).Result()
 
