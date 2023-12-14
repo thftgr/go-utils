@@ -28,9 +28,8 @@ type RedisRepository[E RedisEntity[ID], ID RedisEntityId] interface {
 }
 
 type RedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId] struct {
-	ctx   context.Context
-	Model E               // 제너릭을 통해 자동 설정됨.
-	pipe  redis.Pipeliner // 필수로 추가해야함
+	ctx  context.Context
+	pipe redis.Pipeliner // 필수로 추가해야함
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Save(e E) error {
