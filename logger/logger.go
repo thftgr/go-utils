@@ -32,6 +32,24 @@ type SkipLogger interface {
 	SFatalf(skip int, format string, v ...any)
 }
 
+type AbstractSkipLoggerImpl struct {
+	SkipLogger
+}
+
+func (l *AbstractSkipLoggerImpl) Fatal(v ...any) { l.SFatal(1, v...) }
+func (l *AbstractSkipLoggerImpl) Error(v ...any) { l.SError(1, v...) }
+func (l *AbstractSkipLoggerImpl) Warn(v ...any)  { l.SWarn(1, v...) }
+func (l *AbstractSkipLoggerImpl) Info(v ...any)  { l.SInfo(1, v...) }
+func (l *AbstractSkipLoggerImpl) Debug(v ...any) { l.SDebug(1, v...) }
+func (l *AbstractSkipLoggerImpl) Trace(v ...any) { l.STrace(1, v...) }
+
+func (l *AbstractSkipLoggerImpl) Fatalf(f string, a ...any) { l.SFatalf(1, f, a...) }
+func (l *AbstractSkipLoggerImpl) Errorf(f string, a ...any) { l.SErrorf(1, f, a...) }
+func (l *AbstractSkipLoggerImpl) Warnf(f string, a ...any)  { l.SWarnf(1, f, a...) }
+func (l *AbstractSkipLoggerImpl) Infof(f string, a ...any)  { l.SInfof(1, f, a...) }
+func (l *AbstractSkipLoggerImpl) Debugf(f string, a ...any) { l.SDebugf(1, f, a...) }
+func (l *AbstractSkipLoggerImpl) Tracef(f string, a ...any) { l.STracef(1, f, a...) }
+
 type LEVEL int
 
 func (r LEVEL) String() string {
