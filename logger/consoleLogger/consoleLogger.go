@@ -87,15 +87,19 @@ var defaultConsoleLoggerImpl = ConsoleLoggerImpl{
 }
 
 func NewConsoleLogger(level logger.LEVEL) logger.Logger {
-	l := defaultConsoleLoggerImpl
-	l.Level = level
-	return &l
+	return &ConsoleLoggerImpl{
+		Out:    os.Stdout,
+		Err:    os.Stderr,
+		Prefix: "",
+		Level:  level,
+	}
 }
 
 func NewConsoleLoggerWithWriter(out, err io.Writer, level logger.LEVEL) logger.Logger {
-	l := defaultConsoleLoggerImpl
-	l.Out = out
-	l.Err = err
-	l.Level = level
-	return &l
+	return &ConsoleLoggerImpl{
+		Out:    out,
+		Err:    err,
+		Prefix: "",
+		Level:  level,
+	}
 }
