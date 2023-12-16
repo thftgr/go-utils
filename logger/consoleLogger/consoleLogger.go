@@ -10,11 +10,6 @@ import (
 	"time"
 )
 
-var (
-	out io.Writer = os.Stdout
-	err io.Writer = os.Stderr
-)
-
 type ConsoleLogger interface {
 	logger.SkipLogger
 }
@@ -99,8 +94,8 @@ func (l *ConsoleLoggerImpl) printf(w io.Writer, skip int, lvl logger.LEVEL, form
 //=================================================
 
 var defaultConsoleLoggerImpl = ConsoleLoggerImpl{
-	Out:    out,
-	Err:    err,
+	Out:    os.Stdout,
+	Err:    os.Stderr,
 	Prefix: "",
 }
 
