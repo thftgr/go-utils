@@ -4,16 +4,11 @@ import "github.com/thftgr/go-utils/logger"
 
 type MultiLogRouter interface {
 	logger.SkipLogger
-	AddLogger(logger.SkipLogger)
 }
 
 type MultiLogRouterImpl struct {
 	logger.AbstractSkipLoggerImpl
 	writer []logger.SkipLogger
-}
-
-func NewMultiLogRouterImpl(writer ...logger.SkipLogger) *MultiLogRouterImpl {
-	return &MultiLogRouterImpl{writer: writer}
 }
 
 func (l *MultiLogRouterImpl) SFatal(s int, v ...any) {
@@ -76,4 +71,10 @@ func (l *MultiLogRouterImpl) STracef(s int, f string, a ...any) {
 	for i := range l.writer {
 		l.writer[i].STracef(s+1, f, a...)
 	}
+}
+
+//=================================================
+
+func NewMultiLogRouterImpl(writer ...logger.SkipLogger) *MultiLogRouterImpl {
+	return &MultiLogRouterImpl{writer: writer}
 }
