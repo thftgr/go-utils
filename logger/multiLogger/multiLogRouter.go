@@ -73,6 +73,12 @@ func (l *MultiLogRouterImpl) STracef(s int, f string, a ...any) {
 	}
 }
 
+func (l *MultiLogRouterImpl) Flush() {
+	for i := range l.writer {
+		l.writer[i].Flush()
+	}
+}
+
 //=================================================
 
 func NewMultiLogRouterImpl(writer ...logger.SkipLogger) *MultiLogRouterImpl {
