@@ -80,26 +80,18 @@ func (l *ConsoleLoggerImpl) printf(w io.Writer, skip int, lvl logger.LEVEL, form
 
 //=================================================
 
-var defaultConsoleLoggerImpl = ConsoleLoggerImpl{
-	Out:    os.Stdout,
-	Err:    os.Stderr,
-	Prefix: "",
-}
-
-func NewConsoleLogger(level logger.LEVEL) logger.Logger {
+func NewConsoleLoggerImpl(level logger.LEVEL) *ConsoleLoggerImpl {
 	return &ConsoleLoggerImpl{
-		Out:    os.Stdout,
-		Err:    os.Stderr,
-		Prefix: "",
-		Level:  level,
+		Out:   os.Stdout,
+		Err:   os.Stderr,
+		Level: level,
 	}
 }
 
-func NewConsoleLoggerWithWriter(out, err io.Writer, level logger.LEVEL) logger.Logger {
+func NewConsoleLoggerImplWithWriter(out, err io.Writer, level logger.LEVEL) *ConsoleLoggerImpl {
 	return &ConsoleLoggerImpl{
-		Out:    out,
-		Err:    err,
-		Prefix: "",
-		Level:  level,
+		Out:   out,
+		Err:   err,
+		Level: level,
 	}
 }
