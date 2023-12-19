@@ -103,7 +103,15 @@ func NewRotateFileLoggerImpl1(file FileLogRotator) *RotateFileLoggerImpl {
 		Level:  logger.INFO,
 	}
 }
-func NewRotateFileLoggerImpl2() *RotateFileLoggerImpl {
+func NewRotateFileLoggerImpl2(lvl logger.LEVEL) *RotateFileLoggerImpl {
+	return &RotateFileLoggerImpl{
+		File:   NewTimeBaseFileLogRotatorImpl("./logs/application.log"),
+		Prefix: "",
+		Level:  lvl,
+	}
+}
+
+func NewRotateFileLoggerImpl3() *RotateFileLoggerImpl {
 	return &RotateFileLoggerImpl{
 		File:   NewTimeBaseFileLogRotatorImpl("./logs/application.log"),
 		Prefix: "",
