@@ -22,26 +22,26 @@ type MongoRepository[E MongoEntity[ID], ID MongoEntityId] interface {
 }
 
 type MongoRepositoryImpl[E MongoEntity[ID], ID MongoEntityId] struct {
-	collection *mongo.Collection // 필수로 추가해야함
-	ctx        context.Context
+	Collection *mongo.Collection // 필수로 추가해야함
+	Context    context.Context
 }
 
 func NewMongoRepositoryImpl[E MongoEntity[ID], ID MongoEntityId](collection *mongo.Collection, ctx context.Context) *MongoRepositoryImpl[E, ID] {
-	return &MongoRepositoryImpl[E, ID]{collection: collection, ctx: ctx}
+	return &MongoRepositoryImpl[E, ID]{Collection: collection, Context: ctx}
 }
 
 func NewMongoRepository[E MongoEntity[ID], ID MongoEntityId](collection *mongo.Collection, ctx context.Context) MongoRepository[E, ID] {
-	return &MongoRepositoryImpl[E, ID]{collection: collection, ctx: ctx}
+	return &MongoRepositoryImpl[E, ID]{Collection: collection, Context: ctx}
 }
 
 func (m *MongoRepositoryImpl[E, ID]) Save(e E) (err error) {
-	_, err = m.collection.UpdateOne(m.ctx, bson.M{"_id": e.GetId()}, bson.M{"$set": e}, options.Update().SetUpsert(true))
+	_, err = m.Collection.UpdateOne(m.Context, bson.M{"_id": e.GetId()}, bson.M{"$set": e}, options.Update().SetUpsert(true))
 	return
 }
 
 func (m *MongoRepositoryImpl[E, ID]) SaveAll(e ...E) (count int64, err error) {
 	for i := range e {
-		res, err2 := m.collection.UpdateOne(m.ctx, bson.M{"_id": e[i].GetId()}, bson.M{"$set": e[i]}, options.Update().SetUpsert(true))
+		res, err2 := m.Collection.UpdateOne(m.Context, bson.M{"_id": e[i].GetId()}, bson.M{"$set": e[i]}, options.Update().SetUpsert(true))
 		if err2 != nil {
 			err = err2
 			break
@@ -52,22 +52,22 @@ func (m *MongoRepositoryImpl[E, ID]) SaveAll(e ...E) (count int64, err error) {
 }
 
 func (m *MongoRepositoryImpl[E, ID]) FindById(id ID) (e E, err error) {
-	err = m.collection.FindOne(m.ctx, bson.M{"_id": id}).Decode(&e)
+	err = m.Collection.FindOne(m.Context, bson.M{"_id": id}).Decode(&e)
 	return
 }
 
 func (m *MongoRepositoryImpl[E, ID]) FindAllById(id ...ID) (e []E, err error) {
-	cur, err := m.collection.Find(m.ctx, bson.M{"_id": bson.M{"$in": id}})
+	cur, err := m.Collection.Find(m.Context, bson.M{"_id": bson.M{"$in": id}})
 	if err != nil {
 		return
 	}
-	defer cur.Close(m.ctx)
-	err = cur.All(m.ctx, &e)
+	defer cur.Close(m.Context)
+	err = cur.All(m.Context, &e)
 	return
 }
 
 func (m *MongoRepositoryImpl[E, ID]) Delete(e E) (err error) {
-	_, err = m.collection.DeleteOne(m.ctx, bson.M{"_id": e.GetId()})
+	_, err = m.Collection.DeleteOne(m.Context, bson.M{"_id": e.GetId()})
 	return
 }
 
@@ -76,7 +76,7 @@ func (m *MongoRepositoryImpl[E, ID]) DeleteAll(e ...E) (count int64, err error) 
 	for i := range e {
 		ids[i] = e[i].GetId()
 	}
-	res, err := m.collection.DeleteMany(m.ctx, bson.M{"_id": bson.M{"$in": ids}})
+	res, err := m.Collection.DeleteMany(m.Context, bson.M{"_id": bson.M{"$in": ids}})
 	if err != nil {
 		return
 	}
@@ -85,12 +85,12 @@ func (m *MongoRepositoryImpl[E, ID]) DeleteAll(e ...E) (count int64, err error) 
 }
 
 func (m *MongoRepositoryImpl[E, ID]) DeleteById(id ID) (err error) {
-	_, err = m.collection.DeleteOne(m.ctx, bson.M{"_id": id})
+	_, err = m.Collection.DeleteOne(m.Context, bson.M{"_id": id})
 	return
 }
 
 func (m *MongoRepositoryImpl[E, ID]) DeleteAllById(id ...ID) (count int64, err error) {
-	res, err := m.collection.DeleteMany(m.ctx, bson.M{"_id": bson.M{"$in": id}})
+	res, err := m.Collection.DeleteMany(m.Context, bson.M{"_id": bson.M{"$in": id}})
 	if err != nil {
 		return
 	}
