@@ -29,37 +29,37 @@ type RedisRepository[E RedisEntity[ID], ID RedisEntityId] interface {
 }
 
 type RedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId] struct {
-	ctx  context.Context
-	pipe redis.Pipeliner // 필수로 추가해야함
+	Context context.Context
+	Pipe    redis.Pipeliner // 필수로 추가해야함
 }
 
 func NewRedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId](ctx context.Context, pipe redis.Pipeliner) *RedisRepositoryImpl[E, ID] {
-	return &RedisRepositoryImpl[E, ID]{ctx: ctx, pipe: pipe}
+	return &RedisRepositoryImpl[E, ID]{Context: ctx, Pipe: pipe}
 }
 
 func NewRedisRepository[E RedisEntity[ID], ID RedisEntityId](ctx context.Context, pipe redis.Pipeliner) RedisRepository[E, ID] {
-	return &RedisRepositoryImpl[E, ID]{ctx: ctx, pipe: pipe}
+	return &RedisRepositoryImpl[E, ID]{Context: ctx, Pipe: pipe}
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Save(e E) error {
-	return r.pipe.HMSet(r.ctx, e.GetKey(), e).Err()
+	return r.Pipe.HMSet(r.Context, e.GetKey(), e).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) SaveAll(e ...E) (count int64, err error) {
 	for i := range e {
-		err2 := r.pipe.HMSet(r.ctx, e[i].GetKey(), e[i]).Err()
+		err2 := r.Pipe.HMSet(r.Context, e[i].GetKey(), e[i]).Err()
 		if err2 != nil {
 			err = err2
 			return
 		}
 		count++
 	}
-	_, err = r.pipe.Exec(r.ctx)
+	_, err = r.Pipe.Exec(r.Context)
 	return
 }
 
 func (r *RedisRepositoryImpl[E, ID]) FindById(id ID) (e E, err error) {
-	err = r.pipe.HMGet(r.ctx, id.ToString()).Scan(&e)
+	err = r.Pipe.HMGet(r.Context, id.ToString()).Scan(&e)
 	return
 }
 
@@ -76,7 +76,7 @@ func (r *RedisRepositoryImpl[E, ID]) FindAllById(id ...ID) (res []E, err error) 
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Delete(e E) error {
-	return r.pipe.Del(r.ctx, e.GetKey()).Err()
+	return r.Pipe.Del(r.Context, e.GetKey()).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteAll(e ...E) (count int64, err error) {
@@ -84,12 +84,12 @@ func (r *RedisRepositoryImpl[E, ID]) DeleteAll(e ...E) (count int64, err error) 
 	for i := range e {
 		ids[i] = e[i].GetKey()
 	}
-	return r.pipe.Del(r.ctx, ids...).Result()
+	return r.Pipe.Del(r.Context, ids...).Result()
 
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteById(id ID) error {
-	return r.pipe.Del(r.ctx, id.ToString()).Err()
+	return r.Pipe.Del(r.Context, id.ToString()).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteAllById(id ...ID) (count int64, err error) {
@@ -97,5 +97,5 @@ func (r *RedisRepositoryImpl[E, ID]) DeleteAllById(id ...ID) (count int64, err e
 	for i := range id {
 		ids[i] = id[i].ToString()
 	}
-	return r.pipe.Del(r.ctx, ids...).Result()
+	return r.Pipe.Del(r.Context, ids...).Result()
 }
