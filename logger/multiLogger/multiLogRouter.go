@@ -7,9 +7,22 @@ type MultiLogRouter interface {
 }
 
 type MultiLogRouterImpl struct {
-	logger.AbstractSkipLoggerImpl
 	writer []logger.SkipLogger
 }
+
+func (l *MultiLogRouterImpl) Fatal(v ...any) { l.SFatal(1, v...) }
+func (l *MultiLogRouterImpl) Error(v ...any) { l.SError(1, v...) }
+func (l *MultiLogRouterImpl) Warn(v ...any)  { l.SWarn(1, v...) }
+func (l *MultiLogRouterImpl) Info(v ...any)  { l.SInfo(1, v...) }
+func (l *MultiLogRouterImpl) Debug(v ...any) { l.SDebug(1, v...) }
+func (l *MultiLogRouterImpl) Trace(v ...any) { l.STrace(1, v...) }
+
+func (l *MultiLogRouterImpl) Fatalf(f string, a ...any) { l.SFatalf(1, f, a...) }
+func (l *MultiLogRouterImpl) Errorf(f string, a ...any) { l.SErrorf(1, f, a...) }
+func (l *MultiLogRouterImpl) Warnf(f string, a ...any)  { l.SWarnf(1, f, a...) }
+func (l *MultiLogRouterImpl) Infof(f string, a ...any)  { l.SInfof(1, f, a...) }
+func (l *MultiLogRouterImpl) Debugf(f string, a ...any) { l.SDebugf(1, f, a...) }
+func (l *MultiLogRouterImpl) Tracef(f string, a ...any) { l.STracef(1, f, a...) }
 
 func (l *MultiLogRouterImpl) SFatal(s int, v ...any) {
 	for i := range l.writer {
