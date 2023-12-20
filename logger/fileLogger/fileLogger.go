@@ -18,13 +18,26 @@ type RotateFileLogger interface {
 }
 
 type RotateFileLoggerImpl struct {
-	logger.AbstractSkipLoggerImpl
 	// ALL > TRACE > DEBUG > INFO > WARN > ERROR > FATAL > OFF
 	// default YYYY-MM-DD HH:mm:ss.sss | ${prefix} | ${File} | ${level} :
 	File   FileLogRotator
 	Prefix string
 	Level  logger.LEVEL
 }
+
+func (l *RotateFileLoggerImpl) Fatal(v ...any) { l.SFatal(1, v...) }
+func (l *RotateFileLoggerImpl) Error(v ...any) { l.SError(1, v...) }
+func (l *RotateFileLoggerImpl) Warn(v ...any)  { l.SWarn(1, v...) }
+func (l *RotateFileLoggerImpl) Info(v ...any)  { l.SInfo(1, v...) }
+func (l *RotateFileLoggerImpl) Debug(v ...any) { l.SDebug(1, v...) }
+func (l *RotateFileLoggerImpl) Trace(v ...any) { l.STrace(1, v...) }
+
+func (l *RotateFileLoggerImpl) Fatalf(f string, a ...any) { l.SFatalf(1, f, a...) }
+func (l *RotateFileLoggerImpl) Errorf(f string, a ...any) { l.SErrorf(1, f, a...) }
+func (l *RotateFileLoggerImpl) Warnf(f string, a ...any)  { l.SWarnf(1, f, a...) }
+func (l *RotateFileLoggerImpl) Infof(f string, a ...any)  { l.SInfof(1, f, a...) }
+func (l *RotateFileLoggerImpl) Debugf(f string, a ...any) { l.SDebugf(1, f, a...) }
+func (l *RotateFileLoggerImpl) Tracef(f string, a ...any) { l.STracef(1, f, a...) }
 
 func (l *RotateFileLoggerImpl) SFatal(s int, v ...any) { l.print(s+1, logger.FATAL, v...) }
 func (l *RotateFileLoggerImpl) SError(s int, v ...any) { l.print(s+1, logger.ERROR, v...) }

@@ -17,13 +17,26 @@ type InfluxLogger interface {
 }
 
 type InfluxLoggerImpl struct {
-	logger.AbstractSkipLoggerImpl
 	tags        []protocol.Tag
 	writer      api.WriteAPI
 	Prefix      string
 	Level       logger.LEVEL
 	ServiceName string
 }
+
+func (l *InfluxLoggerImpl) Fatal(v ...any) { l.SFatal(1, v...) }
+func (l *InfluxLoggerImpl) Error(v ...any) { l.SError(1, v...) }
+func (l *InfluxLoggerImpl) Warn(v ...any)  { l.SWarn(1, v...) }
+func (l *InfluxLoggerImpl) Info(v ...any)  { l.SInfo(1, v...) }
+func (l *InfluxLoggerImpl) Debug(v ...any) { l.SDebug(1, v...) }
+func (l *InfluxLoggerImpl) Trace(v ...any) { l.STrace(1, v...) }
+
+func (l *InfluxLoggerImpl) Fatalf(f string, a ...any) { l.SFatalf(1, f, a...) }
+func (l *InfluxLoggerImpl) Errorf(f string, a ...any) { l.SErrorf(1, f, a...) }
+func (l *InfluxLoggerImpl) Warnf(f string, a ...any)  { l.SWarnf(1, f, a...) }
+func (l *InfluxLoggerImpl) Infof(f string, a ...any)  { l.SInfof(1, f, a...) }
+func (l *InfluxLoggerImpl) Debugf(f string, a ...any) { l.SDebugf(1, f, a...) }
+func (l *InfluxLoggerImpl) Tracef(f string, a ...any) { l.STracef(1, f, a...) }
 
 func (l *InfluxLoggerImpl) SFatal(s int, v ...any) { l.print(s+1, logger.FATAL, v...) }
 func (l *InfluxLoggerImpl) SError(s int, v ...any) { l.print(s+1, logger.ERROR, v...) }
