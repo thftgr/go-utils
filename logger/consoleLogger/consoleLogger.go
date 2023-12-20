@@ -87,8 +87,11 @@ func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, level logger.LEVEL, v .
 	_, _ = buf.WriteTo(w)
 }
 
-func (l *ConsoleLoggerImpl) printf(w io.Writer, skip int, lvl logger.LEVEL, format string, args ...any) {
-	l.print(w, skip+1, lvl, fmt.Sprintf(format, args...))
+func (l *ConsoleLoggerImpl) printf(w io.Writer, skip int, level logger.LEVEL, format string, args ...any) {
+	if !l.Level.IsLevelAtLeast(level) {
+		return
+	}
+	l.print(w, skip+1, level, fmt.Sprintf(format, args...))
 }
 
 //=================================================
