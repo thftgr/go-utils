@@ -78,8 +78,11 @@ func (l *InfluxLoggerImpl) print(skip int, level logger.LEVEL, v ...any) {
 	l.post(level, buf.String())
 }
 
-func (l *InfluxLoggerImpl) printf(skip int, lvl logger.LEVEL, format string, args ...any) {
-	l.print(skip+1, lvl, fmt.Sprintf(format, args...))
+func (l *InfluxLoggerImpl) printf(skip int, level logger.LEVEL, format string, args ...any) {
+	if !l.Level.IsLevelAtLeast(level) {
+		return
+	}
+	l.print(skip+1, level, fmt.Sprintf(format, args...))
 }
 
 func (l *InfluxLoggerImpl) post(level logger.LEVEL, data string) {
