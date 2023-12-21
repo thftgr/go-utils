@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/thftgr/go-utils/logger"
 	"net/http"
 )
 
@@ -37,4 +38,17 @@ func (e *EchoUtils) GetStatus() (statusCode int, status string) {
 	statusCode = e.E.Response().Status
 	status = http.StatusText(statusCode)
 	return
+}
+
+func (e *EchoUtils) GetLogger() logger.GroupLogger {
+	switch v := e.E.Get("logger").(type) {
+	case logger.GroupLogger:
+		return v
+	default:
+		return nil
+	}
+}
+
+func (e *EchoUtils) SetLogger(l logger.GroupLogger) {
+	e.E.Set("logger", l)
 }
