@@ -20,9 +20,9 @@ type RotateFileLogger interface {
 type RotateFileLoggerImpl struct {
 	// ALL > TRACE > DEBUG > INFO > WARN > ERROR > FATAL > OFF
 	// default YYYY-MM-DD HH:mm:ss.sss | ${prefix} | ${File} | ${level} :
-	File   FileLogRotator
-	Prefix string
-	Level  logger.LEVEL
+	File      FileLogRotator
+	GroupName string
+	Level     logger.LEVEL
 }
 
 func (l *RotateFileLoggerImpl) Fatal(v ...any) { l.SFatal(1, v...) }
@@ -66,6 +66,14 @@ func (l *RotateFileLoggerImpl) STracef(s int, f string, a ...any) {
 }
 func (l *RotateFileLoggerImpl) Flush() {}
 
+func (l *RotateFileLoggerImpl) Group(name string) (res logger.GroupLogger) {
+	return &RotateFileLoggerImpl{
+		File:      l.File,
+		GroupName: name,
+		Level:     l.Level,
+	}
+}
+
 func (l *RotateFileLoggerImpl) Close() error {
 	return l.File.Close()
 }
@@ -80,9 +88,9 @@ func (l *RotateFileLoggerImpl) print(skip int, level logger.LEVEL, v ...any) {
 	}
 	buf := bytes.Buffer{}
 	buf.WriteString(time.Now().Format("2006-01-02 15:04:05.999"))
-	if l.Prefix != "" {
+	if l.GroupName != "" {
 		buf.WriteString(" | ")
-		buf.WriteString(l.Prefix)
+		buf.WriteString(l.GroupName)
 	}
 	if skip > -1 {
 		buf.WriteString(" | ")
@@ -101,36 +109,4 @@ func (l *RotateFileLoggerImpl) printf(skip int, level logger.LEVEL, format strin
 		return
 	}
 	l.print(skip+1, level, fmt.Sprintf(format, args...))
-}
-
-//=================================================
-
-func NewRotateFileLoggerImpl(file FileLogRotator, lvl logger.LEVEL) *RotateFileLoggerImpl {
-	return &RotateFileLoggerImpl{
-		File:   file,
-		Prefix: "",
-		Level:  lvl,
-	}
-}
-func NewRotateFileLoggerImpl1(file FileLogRotator) *RotateFileLoggerImpl {
-	return &RotateFileLoggerImpl{
-		File:   file,
-		Prefix: "",
-		Level:  logger.INFO,
-	}
-}
-func NewRotateFileLoggerImpl2(lvl logger.LEVEL) *RotateFileLoggerImpl {
-	return &RotateFileLoggerImpl{
-		File:   NewTimeBaseFileLogRotatorImpl("./logs/application.log"),
-		Prefix: "",
-		Level:  lvl,
-	}
-}
-
-func NewRotateFileLoggerImpl3() *RotateFileLoggerImpl {
-	return &RotateFileLoggerImpl{
-		File:   NewTimeBaseFileLogRotatorImpl("./logs/application.log"),
-		Prefix: "",
-		Level:  logger.INFO,
-	}
 }

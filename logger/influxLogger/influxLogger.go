@@ -8,7 +8,6 @@ import (
 	protocol "github.com/influxdata/line-protocol"
 	"github.com/thftgr/go-utils/logger"
 	"github.com/thftgr/go-utils/utils"
-	"os"
 	"time"
 )
 
@@ -19,7 +18,7 @@ type InfluxLogger interface {
 type InfluxLoggerImpl struct {
 	tags        []protocol.Tag
 	writer      api.WriteAPI
-	Prefix      string
+	GroupName   string
 	Level       logger.LEVEL
 	ServiceName string
 }
@@ -56,15 +55,25 @@ func (l *InfluxLoggerImpl) Flush() {
 	l.writer.Flush()
 }
 
+func (l *InfluxLoggerImpl) Group(name string) (res logger.GroupLogger) {
+	return &InfluxLoggerImpl{
+		tags:        l.tags,
+		writer:      l.writer,
+		GroupName:   name,
+		Level:       l.Level,
+		ServiceName: l.ServiceName,
+	}
+}
+
 func (l *InfluxLoggerImpl) print(skip int, level logger.LEVEL, v ...any) {
 	if !l.Level.IsLevelAtLeast(level) {
 		return
 	}
 	buf := bytes.Buffer{}
 	buf.WriteString(time.Now().Format("2006-01-02 15:04:05.999"))
-	if l.Prefix != "" {
+	if l.GroupName != "" {
 		buf.WriteString(" | ")
-		buf.WriteString(l.Prefix)
+		buf.WriteString(l.GroupName)
 	}
 	if skip > -1 {
 		buf.WriteString(" | ")
@@ -90,39 +99,11 @@ func (l *InfluxLoggerImpl) post(level logger.LEVEL, data string) {
 	for i := range l.tags {
 		point.AddTag(l.tags[i].Key, l.tags[i].Value)
 	}
+	if l.GroupName != "" {
+		point.AddTag("group", l.GroupName)
+	}
 	point.AddTag("level", level.String())
 	point.AddTag("service_name", l.ServiceName)
 	point.AddField("log", data)
 	l.writer.WritePoint(point)
-}
-
-//=================================================
-
-func NewInfluxLoggerImpl(tags []protocol.Tag, writer api.WriteAPI, level logger.LEVEL, serviceName string) *InfluxLoggerImpl {
-	return &InfluxLoggerImpl{
-		tags:        tags,
-		writer:      writer,
-		Level:       level,
-		ServiceName: serviceName,
-	}
-}
-func NewInfluxLoggerImpl2(writer api.WriteAPI, level logger.LEVEL, serviceName string) *InfluxLoggerImpl {
-	return &InfluxLoggerImpl{
-		tags: []protocol.Tag{
-			{"hostname", os.Getenv("HOSTNAME")},
-		},
-		writer:      writer,
-		Level:       level,
-		ServiceName: serviceName,
-	}
-}
-func NewInfluxLoggerImpl3(writer api.WriteAPI, serviceName string) *InfluxLoggerImpl {
-	return &InfluxLoggerImpl{
-		tags: []protocol.Tag{
-			{"hostname", os.Getenv("HOSTNAME")},
-		},
-		writer:      writer,
-		Level:       logger.INFO,
-		ServiceName: serviceName,
-	}
 }

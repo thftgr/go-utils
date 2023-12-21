@@ -6,21 +6,20 @@ import (
 	"github.com/thftgr/go-utils/logger"
 	"github.com/thftgr/go-utils/utils"
 	"io"
-	"os"
 	"time"
 )
 
 type ConsoleLogger interface {
-	logger.SkipLogger
+	logger.GroupLogger
 }
 
 type ConsoleLoggerImpl struct {
 	// ALL > TRACE > DEBUG > INFO > WARN > ERROR > FATAL > OFF
 	// default YYYY-MM-DD HH:mm:ss.sss | ${prefix} | ${file} | ${level} :
-	Out    io.Writer
-	Err    io.Writer
-	Prefix string
-	Level  logger.LEVEL
+	Out       io.Writer
+	Err       io.Writer
+	GroupName string
+	Level     logger.LEVEL
 }
 
 func (l *ConsoleLoggerImpl) Fatal(v ...any) { l.SFatal(1, v...) }
@@ -65,15 +64,24 @@ func (l *ConsoleLoggerImpl) STracef(s int, f string, a ...any) {
 
 func (l *ConsoleLoggerImpl) Flush() {}
 
+func (l *ConsoleLoggerImpl) Group(name string) (res logger.GroupLogger) {
+	return &ConsoleLoggerImpl{
+		Out:       l.Out,
+		Err:       l.Err,
+		GroupName: name,
+		Level:     l.Level,
+	}
+}
+
 func (l *ConsoleLoggerImpl) print(w io.Writer, skip int, level logger.LEVEL, v ...any) {
 	if !l.Level.IsLevelAtLeast(level) {
 		return
 	}
 	buf := bytes.Buffer{}
 	buf.WriteString(time.Now().Format("2006-01-02 15:04:05.999"))
-	if l.Prefix != "" {
+	if l.GroupName != "" {
 		buf.WriteString(" | ")
-		buf.WriteString(l.Prefix)
+		buf.WriteString(l.GroupName)
 	}
 	if skip > -1 {
 		buf.WriteString(" | ")
@@ -92,22 +100,4 @@ func (l *ConsoleLoggerImpl) printf(w io.Writer, skip int, level logger.LEVEL, fo
 		return
 	}
 	l.print(w, skip+1, level, fmt.Sprintf(format, args...))
-}
-
-//=================================================
-
-func NewConsoleLoggerImpl(level logger.LEVEL) *ConsoleLoggerImpl {
-	return &ConsoleLoggerImpl{
-		Out:   os.Stdout,
-		Err:   os.Stderr,
-		Level: level,
-	}
-}
-
-func NewConsoleLoggerImplWithWriter(out, err io.Writer, level logger.LEVEL) *ConsoleLoggerImpl {
-	return &ConsoleLoggerImpl{
-		Out:   out,
-		Err:   err,
-		Level: level,
-	}
 }

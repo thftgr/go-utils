@@ -1,5 +1,6 @@
 package logger
 
+// Logger 일반적인 로그출력에 사용
 type Logger interface {
 	Trace(v ...any)
 	Debug(v ...any)
@@ -16,6 +17,7 @@ type Logger interface {
 	Flush()
 }
 
+// SkipLogger 래핑 할때 사용
 type SkipLogger interface {
 	Logger
 	STrace(skip int, v ...any)
@@ -31,6 +33,15 @@ type SkipLogger interface {
 	SErrorf(skip int, format string, v ...any)
 	SFatalf(skip int, format string, v ...any)
 }
+
+type GroupLogger interface {
+	SkipLogger
+	Group(name string) GroupLogger
+}
+
+//=====================================================================================================================
+//=====================================================================================================================
+//=====================================================================================================================
 
 type LEVEL int
 
