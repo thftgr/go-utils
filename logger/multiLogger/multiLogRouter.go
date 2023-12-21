@@ -3,11 +3,11 @@ package multiLogger
 import "github.com/thftgr/go-utils/logger"
 
 type MultiLogRouter interface {
-	logger.SkipLogger
+	logger.GroupLogger
 }
 
 type MultiLogRouterImpl struct {
-	writer []logger.SkipLogger
+	writer []logger.GroupLogger
 }
 
 func (l *MultiLogRouterImpl) Fatal(v ...any) { l.SFatal(1, v...) }
@@ -85,15 +85,21 @@ func (l *MultiLogRouterImpl) STracef(s int, f string, a ...any) {
 		l.writer[i].STracef(s+1, f, a...)
 	}
 }
-
 func (l *MultiLogRouterImpl) Flush() {
 	for i := range l.writer {
 		l.writer[i].Flush()
 	}
 }
+func (l *MultiLogRouterImpl) NewGroup(name string) logger.GroupLogger {
+	res := &MultiLogRouterImpl{writer: make([]logger.GroupLogger, len(l.writer))}
+	for i := range l.writer {
+		res.writer[i] = l.writer[i].NewGroup(name)
+	}
+	return res
+}
 
 //=================================================
 
-func NewMultiLogRouterImpl(writer ...logger.SkipLogger) *MultiLogRouterImpl {
+func NewMultiLogRouterImpl(writer ...logger.GroupLogger) *MultiLogRouterImpl {
 	return &MultiLogRouterImpl{writer: writer}
 }

@@ -64,7 +64,7 @@ func (l *ConsoleLoggerImpl) STracef(s int, f string, a ...any) {
 
 func (l *ConsoleLoggerImpl) Flush() {}
 
-func (l *ConsoleLoggerImpl) Group(name string) (res logger.GroupLogger) {
+func (l *ConsoleLoggerImpl) NewGroup(name string) logger.GroupLogger {
 	return &ConsoleLoggerImpl{
 		Out:       l.Out,
 		Err:       l.Err,

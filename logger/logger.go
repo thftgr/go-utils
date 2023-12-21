@@ -36,7 +36,7 @@ type SkipLogger interface {
 
 type GroupLogger interface {
 	SkipLogger
-	Group(name string) GroupLogger
+	NewGroup(name string) GroupLogger
 }
 
 //=====================================================================================================================
