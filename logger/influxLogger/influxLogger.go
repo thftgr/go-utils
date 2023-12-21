@@ -16,8 +16,8 @@ type InfluxLogger interface {
 }
 
 type InfluxLoggerImpl struct {
-	tags        []protocol.Tag
-	writer      api.WriteAPI
+	Tags        []protocol.Tag
+	Writer      api.WriteAPI
 	GroupName   string
 	Level       logger.LEVEL
 	ServiceName string
@@ -52,13 +52,13 @@ func (l *InfluxLoggerImpl) SDebugf(s int, f string, a ...any) { l.printf(s+1, lo
 func (l *InfluxLoggerImpl) STracef(s int, f string, a ...any) { l.printf(s+1, logger.TRACE, f, a...) }
 
 func (l *InfluxLoggerImpl) Flush() {
-	l.writer.Flush()
+	l.Writer.Flush()
 }
 
 func (l *InfluxLoggerImpl) NewGroup(name string) logger.GroupLogger {
 	return &InfluxLoggerImpl{
-		tags:        l.tags,
-		writer:      l.writer,
+		Tags:        l.Tags,
+		Writer:      l.Writer,
 		GroupName:   name,
 		Level:       l.Level,
 		ServiceName: l.ServiceName,
@@ -96,8 +96,8 @@ func (l *InfluxLoggerImpl) printf(skip int, level logger.LEVEL, format string, a
 
 func (l *InfluxLoggerImpl) post(level logger.LEVEL, data string) {
 	point := influxdb2.NewPointWithMeasurement("log").SetTime(time.Now())
-	for i := range l.tags {
-		point.AddTag(l.tags[i].Key, l.tags[i].Value)
+	for i := range l.Tags {
+		point.AddTag(l.Tags[i].Key, l.Tags[i].Value)
 	}
 	if l.GroupName != "" {
 		point.AddTag("group", l.GroupName)
@@ -105,5 +105,5 @@ func (l *InfluxLoggerImpl) post(level logger.LEVEL, data string) {
 	point.AddTag("level", level.String())
 	point.AddTag("service_name", l.ServiceName)
 	point.AddField("log", data)
-	l.writer.WritePoint(point)
+	l.Writer.WritePoint(point)
 }
