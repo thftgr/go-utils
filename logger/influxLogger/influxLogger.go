@@ -55,7 +55,7 @@ func (l *InfluxLoggerImpl) Flush() {
 	l.writer.Flush()
 }
 
-func (l *InfluxLoggerImpl) Group(name string) (res logger.GroupLogger) {
+func (l *InfluxLoggerImpl) NewGroup(name string) logger.GroupLogger {
 	return &InfluxLoggerImpl{
 		tags:        l.tags,
 		writer:      l.writer,

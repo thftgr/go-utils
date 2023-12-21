@@ -66,7 +66,7 @@ func (l *RotateFileLoggerImpl) STracef(s int, f string, a ...any) {
 }
 func (l *RotateFileLoggerImpl) Flush() {}
 
-func (l *RotateFileLoggerImpl) Group(name string) (res logger.GroupLogger) {
+func (l *RotateFileLoggerImpl) NewGroup(name string) logger.GroupLogger {
 	return &RotateFileLoggerImpl{
 		File:      l.File,
 		GroupName: name,
