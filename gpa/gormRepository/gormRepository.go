@@ -1,6 +1,7 @@
 package gormRepository
 
 import (
+	"database/sql"
 	"github.com/thftgr/go-utils/gpa"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -17,6 +18,9 @@ type GormEntity[ID GormEntityId] interface {
 
 type GormRepository[E GormEntity[ID], ID GormEntityId] interface {
 	gpa.CrudRepository[E, ID]
+	Begin(opts ...*sql.TxOptions) GormRepository[E, ID]
+	Rollback() error
+	Commit() error
 }
 
 type GormRepositoryImpl[E GormEntity[ID], ID GormEntityId] struct {
@@ -74,4 +78,13 @@ func (r *GormRepositoryImpl[E, ID]) DeleteAllById(id ...ID) (int64, error) {
 	}
 	res := r.DB.Delete(&e)
 	return res.RowsAffected, res.Error
+}
+func (r *GormRepositoryImpl[E, ID]) Begin(opts ...*sql.TxOptions) GormRepository[E, ID] {
+	return NewGormRepositoryImpl[E, ID](r.DB.Begin(opts...))
+}
+func (r *GormRepositoryImpl[E, ID]) Rollback() error {
+	return r.DB.Rollback().Error
+}
+func (r *GormRepositoryImpl[E, ID]) Commit() error {
+	return r.DB.Commit().Error
 }
