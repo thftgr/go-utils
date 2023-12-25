@@ -2,10 +2,10 @@ package influxRepository
 
 import (
 	"context"
+	"fmt"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
-	protocol "github.com/influxdata/line-protocol"
 	"github.com/thftgr/go-utils/gpa"
 	"time"
 )
@@ -29,16 +29,15 @@ import (
 // * `influxdb:"field:${field_name}"`
 // * `influxdb:"time"`
 type InfluxEntity interface {
-	InfluxEntityDecoder
-	InfluxEntityEncoder
+	gpa.TimeSeriesEntity
 }
 
 type InfluxRepository[E InfluxEntity] interface {
 	gpa.TimeSeriesRepository[E]
-	FindAllByTime(time.Time, time.Time, ...string) ([]E, error)             // |<---------->|
-	FindAllByDuration(time.Duration, time.Duration, ...string) ([]E, error) // |<---------->|
-	FindAllByTimeAfter(time.Time, ...string) ([]E, error)                   // |--------------->latest
-	FindAllByDurationAfter(time.Duration, ...string) ([]E, error)           // |--------------->latest
+	FindAllByTime(time.Time, time.Time) ([]E, error)             // |<---------->|
+	FindAllByDuration(time.Duration, time.Duration) ([]E, error) // |<---------->|
+	FindAllByTimeAfter(time.Time) ([]E, error)                   // |--------------->latest
+	FindAllByDurationAfter(time.Duration) ([]E, error)           // |--------------->latest
 }
 
 type InfluxRepositoryImpl[E InfluxEntity] struct {
@@ -49,10 +48,11 @@ type InfluxRepositoryImpl[E InfluxEntity] struct {
 	QueryAPI    api.QueryAPI
 	DeleteAPI   api.DeleteAPI
 	Context     context.Context
-	EntityCache any
+	EntityCache *InfluxEntityTagHelper[E]
+	Timeout     time.Duration
 }
 
-func NewInfluxRepositoryImpl[E InfluxEntity](org string, bucket string, DB influxdb2.Client, context context.Context) *InfluxRepositoryImpl[E] {
+func NewInfluxRepositoryImpl[E InfluxEntity](org string, bucket string, DB influxdb2.Client, context context.Context, timeout time.Duration) *InfluxRepositoryImpl[E] {
 	return &InfluxRepositoryImpl[E]{
 		Org:         org,
 		Bucket:      bucket,
@@ -61,19 +61,27 @@ func NewInfluxRepositoryImpl[E InfluxEntity](org string, bucket string, DB influ
 		QueryAPI:    DB.QueryAPI(org),
 		DeleteAPI:   DB.DeleteAPI(),
 		Context:     context,
-		EntityCache: nil,
+		EntityCache: NewInfluxEntityTagHelper[E](),
+		Timeout:     timeout,
 	}
 }
 
+// ToPoint E 가 InfluxEntityEncoder 를 구현하지 않은경우 reflection 으로 처리됨. 이로인해 성능문제가 발생할수있음.
+// If ToPoint E does not implement InfluxEntityEncoder, it will be treated as reflection, which may cause performance problems.
 func (r *InfluxRepositoryImpl[E]) ToPoint(e E) (p *write.Point) {
-	p = write.NewPointWithMeasurement(e.GetMeasurement())
-	for _, t := range e.GetTags() {
-		p.AddTag(t.Key, t.Value)
+	if encoder, ok := (any(e)).(InfluxEntityEncoder); ok {
+		p = write.NewPointWithMeasurement(encoder.GetMeasurement())
+		for _, t := range encoder.GetTags() {
+			p.AddTag(t.Key, t.Value)
+		}
+		for _, f := range encoder.GetField() {
+			p.AddField(f.Key, f.Value)
+		}
+		p.SetTime(encoder.GetTime())
+	} else {
+		return r.EntityCache.ToPoint(&e)
 	}
-	for _, f := range e.GetField() {
-		p.AddField(f.Key, f.Value)
-	}
-	p.SetTime(e.GetTime())
+
 	return
 }
 
@@ -81,9 +89,13 @@ func (r *InfluxRepositoryImpl[E]) FromPoints(rows *api.QueryTableResult) (res []
 	for rows.Next() {
 		record := rows.Record()
 		var entity E
-		entity.SetTime(record.Time())
-		if err = entity.SetValue(record.Values()); err != nil {
-			return nil, err
+		if decoder, ok := (any(entity)).(InfluxEntityDecoder); ok {
+			decoder.SetTime(record.Time())
+			if err = decoder.SetValue(record.Values()); err != nil {
+				return nil, err
+			}
+		} else {
+			_, err = r.EntityCache.FromRows(rows)
 		}
 		res = append(res, entity)
 	}
@@ -91,32 +103,31 @@ func (r *InfluxRepositoryImpl[E]) FromPoints(rows *api.QueryTableResult) (res []
 }
 
 func (r *InfluxRepositoryImpl[E]) Save(e E) error {
-	c := r.WriteAPI.Errors()
+	//c := r.WriteAPI.Errors()
 	r.WriteAPI.WritePoint(r.ToPoint(e))
-	return <-c
+	r.WriteAPI.Flush()
+	return nil
 }
 
-func (r *InfluxRepositoryImpl[E]) FindAllByTime(start time.Time, stop time.Time, tag ...protocol.Tag) (res []E, err error) {
-	qs := ``
-	rows, err := r.QueryAPI.QueryWithParams(r.Context, qs, []string{})
+func (r *InfluxRepositoryImpl[E]) FindAllByTime(start time.Time, stop time.Time) ([]E, error) {
+	panic("")
+}
+func (r *InfluxRepositoryImpl[E]) FindAllByDuration(start time.Duration, stop time.Duration) ([]E, error) {
+	panic("")
+}
+func (r *InfluxRepositoryImpl[E]) FindAllByTimeAfter(start time.Time) ([]E, error) {
+	ctx, cancel := context.WithTimeout(r.Context, r.Timeout)
+	defer cancel()
+	rows, err := r.QueryAPI.Query(ctx, fmt.Sprintf(`from(bucket: "%s")
+	|> range(start: %s)
+	|> filter(fn: (r) => r._measurement == "%s")
+    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+	`, r.Bucket, start.Format(time.RFC3339), r.EntityCache.measurement))
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	return r.FromPoints(rows)
+	return r.EntityCache.FromRows(rows)
 }
-
-func (r *InfluxRepositoryImpl[E]) FindAllByDuration(start time.Duration, stop time.Duration) ([]E, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r *InfluxRepositoryImpl[E]) FindAllByTimeAfter(start time.Time) ([]E, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r *InfluxRepositoryImpl[E]) FindAllByDurationAfter(start time.Duration) ([]E, error) {
-	//TODO implement me
-	panic("implement me")
+func (r *InfluxRepositoryImpl[E]) FindAllByDurationAfter(time.Duration) ([]E, error) {
+	panic("")
 }

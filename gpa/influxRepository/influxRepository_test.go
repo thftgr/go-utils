@@ -1,51 +1,23 @@
 package influxRepository
 
 import (
-	protocol "github.com/influxdata/line-protocol"
+	"context"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/thftgr/go-utils/env"
+	"net/http"
 	"testing"
 	"time"
 )
 
 type RepositoryTestEntity struct {
 	Measurement `influxdb:"measurement:test"`
-	T1          string    `influxdb:"tag:tag_name"`
-	F2          string    `influxdb:"field:field_name"`
+	Name        string    `influxdb:"tag:name"`
+	LogString   string    `influxdb:"field:log"`
+	Status      int       `influxdb:"field:status"`
 	Time        time.Time `influxdb:"time"`
 }
 
-func (r *RepositoryTestEntity) SetValue(values map[string]interface{}) error {
-	for k, v := range values {
-		switch k {
-		case "t1":
-			r.T1, _ = v.(string)
-		case "f2":
-			r.F2, _ = v.(string)
-		}
-	}
-	return nil
-}
-
-func (r *RepositoryTestEntity) SetTime(t time.Time) {
-	r.Time = t
-}
-
-func (r *RepositoryTestEntity) GetMeasurement() string {
-	return "dev"
-}
-
-func (r *RepositoryTestEntity) GetTags() []*protocol.Tag {
-	return []*protocol.Tag{
-		{"t1", r.T1},
-	}
-}
-
-func (r *RepositoryTestEntity) GetField() []*protocol.Field {
-	return []*protocol.Field{
-		{"f2", r.F2},
-	}
-}
-
-func (r *RepositoryTestEntity) GetTime() time.Time {
+func (r RepositoryTestEntity) GetTime() time.Time {
 	return r.Time
 }
 
@@ -54,7 +26,34 @@ type RepositoryTestEntityRepository struct {
 }
 
 func TestInfluxRepositoryImpl_ToPoint(t *testing.T) {
-	//ienv, _ := env.InfluxDB{}.Parse()
-	//client := influxdb2.NewClient(ienv.URL, ienv.TOKEN)
-	//influxRepository.InfluxRepositoryImpl[Test]{}
+	ienv, _ := env.InfluxDB{}.Parse()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	repo := &RepositoryTestEntityRepository{
+		InfluxRepository: NewInfluxRepositoryImpl[RepositoryTestEntity](
+			ienv.ORG, ienv.BUCKET, influxdb2.NewClient(ienv.URL, ienv.TOKEN), ctx, time.Second*5,
+		),
+	}
+	entity := &RepositoryTestEntity{
+		Name:      "test",
+		LogString: "this is log",
+		Status:    http.StatusOK,
+		Time:      time.Now(),
+	}
+	testTime := time.Now()
+	if err := repo.Save(*entity); err != nil {
+		t.Error(err)
+	} else {
+		t.Log("saved.")
+	}
+
+	if res, err := repo.FindAllByTimeAfter(testTime); err != nil {
+		t.Error(err)
+	} else if res == nil || len(res) < 1 {
+		t.Errorf("result should return 1 or more rows but return nil or empty slice.")
+		t.Errorf("res: %+v", res)
+	} else {
+		t.Logf("res: %+v", res)
+	}
+
 }

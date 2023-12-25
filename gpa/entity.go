@@ -11,5 +11,5 @@ type Entity[ID Id] interface {
 }
 
 type TimeSeriesEntity interface {
-	Time() time.Time
+	GetTime() time.Time
 }
