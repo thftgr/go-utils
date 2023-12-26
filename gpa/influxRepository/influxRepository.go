@@ -1,13 +1,16 @@
 package influxRepository
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	protocol "github.com/influxdata/line-protocol"
 	"github.com/thftgr/go-utils/gpa"
+	"strings"
 	"time"
 )
 
@@ -35,14 +38,25 @@ type InfluxEntity interface {
 
 type InfluxRepository[E InfluxEntity] interface {
 	gpa.TimeSeriesRepository[E]
-	FindAllByTime(time.Time, time.Time) ([]E, error)             // |<---------->|
-	FindAllByDuration(time.Duration, time.Duration) ([]E, error) // |<---------->|
-	FindAllByTimeAfter(time.Time) ([]E, error)                   // |--------------->latest
-	FindAllByDurationAfter(time.Duration) ([]E, error)           // |--------------->latest
-	DeleteAllByTime(time.Time, time.Time) error                  // |<---------->|
-	DeleteAllByDuration(time.Duration, time.Duration) error      // |<---------->|
-	DeleteAllByTimeAfter(time.Time) error                        // |--------------->latest
-	DeleteAllByDurationAfter(time.Duration) error                // |--------------->latest
+	SaveAndFlush(E) error
+
+	FindAllByTime(time.Time, time.Time) ([]E, error)                                     // |<---------->|
+	FindAllByDuration(time.Duration, time.Duration) ([]E, error)                         // |<---------->|
+	FindAllByTagsAndTime(time.Time, time.Time, []*protocol.Tag) ([]E, error)             // |<---------->|
+	FindAllByTagsAndDuration(time.Duration, time.Duration, []*protocol.Tag) ([]E, error) // |<---------->|
+	FindAllByTimeAfter(time.Time) ([]E, error)                                           // |--------------->now
+	FindAllByDurationAfter(time.Duration) ([]E, error)                                   // |--------------->now
+	FindAllByTagsAndTimeAfter(time.Time, []*protocol.Tag) ([]E, error)                   // |--------------->now
+	FindAllByTagsAndDurationAfter(time.Duration, []*protocol.Tag) ([]E, error)           // |--------------->now
+
+	DeleteAllByTime(time.Time, time.Time) error                                  // |<---------->|
+	DeleteAllByDuration(time.Duration, time.Duration) error                      // |<---------->|
+	DeleteAllByTagsTime(time.Time, time.Time, []*protocol.Tag) error             // |<---------->|
+	DeleteAllByTagsDuration(time.Duration, time.Duration, []*protocol.Tag) error // |<---------->|
+	DeleteAllByTimeAfter(time.Time) error                                        // |--------------->now
+	DeleteAllByDurationAfter(time.Duration) error                                // |--------------->now
+	DeleteAllByTagsTimeAfter(time.Time, []*protocol.Tag) error                   // |--------------->now
+	DeleteAllByTagsDurationAfter(time.Duration, []*protocol.Tag) error           // |--------------->now
 }
 
 type InfluxRepositoryImpl[E InfluxEntity] struct {
@@ -107,46 +121,186 @@ func (r *InfluxRepositoryImpl[E]) FromPoints(rows *api.QueryTableResult) (res []
 	return
 }
 
+// TimeBaseQueryBuilder
+//
+//	from(bucket: "%s")
+//	    |> range(start: %s, stop:%s)
+//	    |> filter(fn: (r) => r._measurement == "%s" and ...)
+//	    |> keep(columns: [%s])
+//	    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+func (r *InfluxRepositoryImpl[E]) TimeBaseQueryBuilder(start time.Time, stop *time.Time, tags []*protocol.Tag, columns ...string) string {
+	buf := bytes.Buffer{}
+	_, _ = fmt.Fprintf(&buf, `from(bucket: "%s")`, r.Bucket)
+	if stop != nil {
+		_, _ = fmt.Fprintf(&buf, `  |> range(start: %s, stop: %s)`, start.Format(time.RFC3339), stop.Format(time.RFC3339))
+	} else {
+		_, _ = fmt.Fprintf(&buf, `  |> range(start: %s)`, start.Format(time.RFC3339))
+	}
+
+	var opers = []string{fmt.Sprintf(`r._measurement == "%s"`, r.EntityCache.measurement)}
+	for _, t := range tags {
+		opers = append(opers, fmt.Sprintf(`r.%s == "%s"`, t.Key, t.Value))
+	}
+	_, _ = fmt.Fprintf(&buf, `  |> filter(fn: (r) => %s)`, strings.Join(opers, " and "))
+
+	if len(columns) > 0 {
+		for i := range columns {
+			columns[i] = `"` + columns[i] + `"`
+		}
+		_, _ = fmt.Fprintf(&buf, `  |> keep(columns: [%s])`, strings.Join(columns, ", "))
+	}
+
+	_, _ = fmt.Fprint(&buf, `  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`)
+	return buf.String()
+}
+
+// DurationBaseQueryBuilder
+//
+//	from(bucket: "%s")
+//	    |> range(start: -%s, stop: -%s)
+//	    |> filter(fn: (r) => r._measurement == "%s" and ...)
+//	    |> keep(columns: [%s])
+//	    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+func (r *InfluxRepositoryImpl[E]) DurationBaseQueryBuilder(start time.Duration, stop *time.Duration, tags []*protocol.Tag, columns ...string) string {
+	buf := bytes.Buffer{}
+	_, _ = fmt.Fprintf(&buf, `from(bucket: "%s")`, r.Bucket)
+	if stop != nil {
+		_, _ = fmt.Fprintf(&buf, `  |> range(start: -%s, stop: -%s)`, start, stop)
+	} else {
+		_, _ = fmt.Fprintf(&buf, `  |> range(start: -%s)`, start)
+	}
+
+	var opers = []string{fmt.Sprintf(`r._measurement == "%s"`, r.EntityCache.measurement)}
+	for _, t := range tags {
+		opers = append(opers, fmt.Sprintf(`r.%s == "%s"`, t.Key, t.Value))
+	}
+	_, _ = fmt.Fprintf(&buf, `  |> filter(fn: (r) => %s)`, strings.Join(opers, " and "))
+
+	if len(columns) > 0 {
+		for i := range columns {
+			columns[i] = `"` + columns[i] + `"`
+		}
+		_, _ = fmt.Fprintf(&buf, `  |> keep(columns: [%s])`, strings.Join(columns, ", "))
+	}
+
+	_, _ = fmt.Fprint(&buf, `  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")`)
+	return buf.String()
+}
+func (r *InfluxRepositoryImpl[E]) PredicateBuilder(tags []*protocol.Tag) string {
+	var opers = []string{fmt.Sprintf(`_measurement == "%s"`, r.EntityCache.measurement)}
+	for _, t := range tags {
+		opers = append(opers, fmt.Sprintf(`%s == "%s"`, t.Key, t.Value))
+	}
+	return strings.Join(opers, " and ")
+}
+
+func (r *InfluxRepositoryImpl[E]) QueryByTime(start time.Time, stop *time.Time, tags []*protocol.Tag, fields ...string) (res []E, err error) {
+	ctx, cancel := context.WithTimeout(r.Context, r.Timeout)
+	defer cancel()
+	rows, err := r.QueryAPI.Query(ctx, r.TimeBaseQueryBuilder(start, stop, tags, fields...))
+	if err != nil {
+		return
+	}
+	defer func() {
+		err = errors.Join(err, rows.Close())
+	}()
+	return r.EntityCache.FromRows(rows)
+}
+
+func (r *InfluxRepositoryImpl[E]) QueryByDuration(start time.Duration, stop *time.Duration, tags []*protocol.Tag, fields ...string) (res []E, err error) {
+	ctx, cancel := context.WithTimeout(r.Context, r.Timeout)
+	defer cancel()
+	rows, err := r.QueryAPI.Query(ctx, r.DurationBaseQueryBuilder(start, stop, tags, fields...))
+	if err != nil {
+		return
+	}
+	defer func() {
+		err = errors.Join(err, rows.Close())
+	}()
+	return r.EntityCache.FromRows(rows)
+}
+
+func (r *InfluxRepositoryImpl[E]) DeleteByTime(start time.Time, stop *time.Time, tags []*protocol.Tag) (err error) {
+	ctx, cancel := context.WithTimeout(r.Context, r.Timeout)
+	defer cancel()
+	if stop != nil {
+		return r.DeleteAPI.DeleteWithName(ctx, r.Org, r.Bucket, start, *stop, r.PredicateBuilder(tags))
+	} else {
+		return r.DeleteAPI.DeleteWithName(ctx, r.Org, r.Bucket, start, time.Now(), r.PredicateBuilder(tags))
+	}
+}
+
+func (r *InfluxRepositoryImpl[E]) DeleteByDuration(start time.Duration, stop *time.Duration, tags []*protocol.Tag) (err error) {
+	now := time.Now()
+	if stop != nil {
+		st := now.Add(-*stop)
+		return r.DeleteByTime(now.Add(-start), &st, tags)
+	} else {
+		return r.DeleteByTime(now.Add(-start), &now, tags)
+	}
+}
+
+// ====================================================================================================================
+// ====================================================================================================================
+// ====================================================================================================================
+
 func (r *InfluxRepositoryImpl[E]) Save(e E) error {
-	//c := r.WriteAPI.Errors()
+	r.WriteAPI.WritePoint(r.ToPoint(e))
+	return nil
+}
+
+func (r *InfluxRepositoryImpl[E]) SaveAndFlush(e E) error {
 	r.WriteAPI.WritePoint(r.ToPoint(e))
 	r.WriteAPI.Flush()
 	return nil
 }
 
-func (r *InfluxRepositoryImpl[E]) FindAllByTime(start time.Time, stop time.Time) ([]E, error) {
-	panic("")
+func (r *InfluxRepositoryImpl[E]) FindAllByTime(start time.Time, stop time.Time) (res []E, err error) {
+	return r.QueryByTime(start, &stop, nil)
 }
-func (r *InfluxRepositoryImpl[E]) FindAllByDuration(start time.Duration, stop time.Duration) ([]E, error) {
-	panic("")
+func (r *InfluxRepositoryImpl[E]) FindAllByDuration(start time.Duration, stop time.Duration) (res []E, err error) {
+	return r.QueryByDuration(start, &stop, nil)
+}
+func (r *InfluxRepositoryImpl[E]) FindAllByTagsAndTime(start time.Time, stop time.Time, tags []*protocol.Tag) (res []E, err error) {
+	return r.QueryByTime(start, &stop, tags)
+}
+func (r *InfluxRepositoryImpl[E]) FindAllByTagsAndDuration(start time.Duration, stop time.Duration, tags []*protocol.Tag) (res []E, err error) {
+	return r.QueryByDuration(start, &stop, tags)
 }
 func (r *InfluxRepositoryImpl[E]) FindAllByTimeAfter(start time.Time) (res []E, err error) {
-	ctx, cancel := context.WithTimeout(r.Context, r.Timeout)
-	defer cancel()
-	rows, err := r.QueryAPI.Query(ctx, fmt.Sprintf(`
-from(bucket: "%s")
-	|> range(start: %s)
-	|> filter(fn: (r) => r._measurement == "%s")
-    |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-	`, r.Bucket, start.Format(time.RFC3339), r.EntityCache.measurement),
-	)
-	if err != nil {
-		return
-	}
-	defer func(rows *api.QueryTableResult) {
-		e := rows.Close()
-		if e != nil {
-			err = errors.Join(err, e)
-		}
-	}(rows)
-	return r.EntityCache.FromRows(rows)
+	return r.QueryByTime(start, nil, nil)
 }
-func (r *InfluxRepositoryImpl[E]) FindAllByDurationAfter(time.Duration) ([]E, error) {
-	panic("")
+func (r *InfluxRepositoryImpl[E]) FindAllByDurationAfter(start time.Duration) (res []E, err error) {
+	return r.QueryByDuration(start, nil, nil)
+}
+func (r *InfluxRepositoryImpl[E]) FindAllByTagsAndTimeAfter(start time.Time, tags []*protocol.Tag) (res []E, err error) {
+	return r.QueryByTime(start, nil, tags)
+}
+func (r *InfluxRepositoryImpl[E]) FindAllByTagsAndDurationAfter(start time.Duration, tags []*protocol.Tag) (res []E, err error) {
+	return r.QueryByDuration(start, nil, tags)
 }
 
+func (r *InfluxRepositoryImpl[E]) DeleteAllByTime(start time.Time, stop time.Time) error {
+	return r.DeleteByTime(start, &stop, nil)
+}
+func (r *InfluxRepositoryImpl[E]) DeleteAllByDuration(start time.Duration, stop time.Duration) error {
+	return r.DeleteByDuration(start, &stop, nil)
+}
+func (r *InfluxRepositoryImpl[E]) DeleteAllByTagsTime(start time.Time, stop time.Time, tags []*protocol.Tag) error {
+	return r.DeleteByTime(start, &stop, tags)
+}
+func (r *InfluxRepositoryImpl[E]) DeleteAllByTagsDuration(start time.Duration, stop time.Duration, tags []*protocol.Tag) error {
+	return r.DeleteByDuration(start, &stop, tags)
+}
 func (r *InfluxRepositoryImpl[E]) DeleteAllByTimeAfter(start time.Time) (err error) {
-	ctx, cancel := context.WithTimeout(r.Context, r.Timeout)
-	defer cancel()
-	return r.DeleteAPI.DeleteWithName(ctx, r.Org, r.Bucket, start, time.Now(), "")
+	return r.DeleteByTime(start, nil, nil)
+}
+func (r *InfluxRepositoryImpl[E]) DeleteAllByDurationAfter(start time.Duration) error {
+	return r.DeleteByDuration(start, nil, nil)
+}
+func (r *InfluxRepositoryImpl[E]) DeleteAllByTagsTimeAfter(start time.Time, tags []*protocol.Tag) error {
+	return r.DeleteByTime(start, nil, tags)
+}
+func (r *InfluxRepositoryImpl[E]) DeleteAllByTagsDurationAfter(start time.Duration, tags []*protocol.Tag) error {
+	return r.DeleteByDuration(start, nil, tags)
 }
