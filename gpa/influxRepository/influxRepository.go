@@ -2,6 +2,7 @@ package influxRepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
@@ -38,6 +39,7 @@ type InfluxRepository[E InfluxEntity] interface {
 	FindAllByDuration(time.Duration, time.Duration) ([]E, error) // |<---------->|
 	FindAllByTimeAfter(time.Time) ([]E, error)                   // |--------------->latest
 	FindAllByDurationAfter(time.Duration) ([]E, error)           // |--------------->latest
+	DeleteAllByTimeAfter(time.Time) error
 }
 
 type InfluxRepositoryImpl[E InfluxEntity] struct {
@@ -46,7 +48,7 @@ type InfluxRepositoryImpl[E InfluxEntity] struct {
 	DB          influxdb2.Client
 	WriteAPI    api.WriteAPI
 	QueryAPI    api.QueryAPI
-	DeleteAPI   api.DeleteAPI
+	DeleteAPI   api.DeleteAPI // https://docs.influxdata.com/influxdb/v2/reference/syntax/delete-predicate/ 참고
 	Context     context.Context
 	EntityCache *InfluxEntityTagHelper[E]
 	Timeout     time.Duration
@@ -115,19 +117,33 @@ func (r *InfluxRepositoryImpl[E]) FindAllByTime(start time.Time, stop time.Time)
 func (r *InfluxRepositoryImpl[E]) FindAllByDuration(start time.Duration, stop time.Duration) ([]E, error) {
 	panic("")
 }
-func (r *InfluxRepositoryImpl[E]) FindAllByTimeAfter(start time.Time) ([]E, error) {
+func (r *InfluxRepositoryImpl[E]) FindAllByTimeAfter(start time.Time) (res []E, err error) {
 	ctx, cancel := context.WithTimeout(r.Context, r.Timeout)
 	defer cancel()
-	rows, err := r.QueryAPI.Query(ctx, fmt.Sprintf(`from(bucket: "%s")
+	rows, err := r.QueryAPI.Query(ctx, fmt.Sprintf(`
+from(bucket: "%s")
 	|> range(start: %s)
 	|> filter(fn: (r) => r._measurement == "%s")
     |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-	`, r.Bucket, start.Format(time.RFC3339), r.EntityCache.measurement))
+	`, r.Bucket, start.Format(time.RFC3339), r.EntityCache.measurement),
+	)
 	if err != nil {
-		return nil, err
+		return
 	}
+	defer func(rows *api.QueryTableResult) {
+		e := rows.Close()
+		if e != nil {
+			err = errors.Join(err, e)
+		}
+	}(rows)
 	return r.EntityCache.FromRows(rows)
 }
 func (r *InfluxRepositoryImpl[E]) FindAllByDurationAfter(time.Duration) ([]E, error) {
 	panic("")
+}
+
+func (r *InfluxRepositoryImpl[E]) DeleteAllByTimeAfter(start time.Time) (err error) {
+	ctx, cancel := context.WithTimeout(r.Context, r.Timeout)
+	defer cancel()
+	return r.DeleteAPI.DeleteWithName(ctx, r.Org, r.Bucket, start, time.Now(), "")
 }
