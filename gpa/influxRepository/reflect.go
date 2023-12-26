@@ -141,9 +141,6 @@ func (r *InfluxEntityTagHelper[E]) ToPoint(e *E) *write.Point {
 
 // FromRows 그룹 키가 변경될수 있는데 고려되지 않았음.
 func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E, err error) {
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
 	for rows.Next() {
 		record := rows.Record()
 		values := record.Values()
@@ -271,6 +268,7 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 		}
 		res = append(res, row)
 	}
+	err = errors.Join(err, rows.Close())
 	return
 }
 
