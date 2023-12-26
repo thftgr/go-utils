@@ -39,7 +39,10 @@ type InfluxRepository[E InfluxEntity] interface {
 	FindAllByDuration(time.Duration, time.Duration) ([]E, error) // |<---------->|
 	FindAllByTimeAfter(time.Time) ([]E, error)                   // |--------------->latest
 	FindAllByDurationAfter(time.Duration) ([]E, error)           // |--------------->latest
-	DeleteAllByTimeAfter(time.Time) error
+	DeleteAllByTime(time.Time, time.Time) error                  // |<---------->|
+	DeleteAllByDuration(time.Duration, time.Duration) error      // |<---------->|
+	DeleteAllByTimeAfter(time.Time) error                        // |--------------->latest
+	DeleteAllByDurationAfter(time.Duration) error                // |--------------->latest
 }
 
 type InfluxRepositoryImpl[E InfluxEntity] struct {
