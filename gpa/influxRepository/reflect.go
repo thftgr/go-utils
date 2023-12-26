@@ -1,9 +1,11 @@
 package influxRepository
 
 import (
+	"errors"
 	"fmt"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"math"
 	"reflect"
 	"strings"
 	"time"
@@ -22,7 +24,8 @@ type InfluxEntityTagHelper[E InfluxEntity] struct {
 }
 
 // NewInfluxEntityTagHelper 요구사항에 부합하지 않은경우 error 대신 panic 을 발생시킵니다.
-// 반복해서 호출하도록 설계하지 말고 엔티티당 1회 호출할수있도록 설계하는것을 권장
+// 반복해서 호출하도록 설계하지 말고 엔티티당 최초 1회만 호출할수있도록 설계하는것을 권장
+// - repo 에서 초기화할때 가지고 있는것을 추천함.
 func NewInfluxEntityTagHelper[E InfluxEntity]() (r *InfluxEntityTagHelper[E]) {
 	r = &InfluxEntityTagHelper[E]{
 		tagIndex:   make(map[string]*reflect.StructField),
@@ -115,7 +118,7 @@ func (r *InfluxEntityTagHelper[E]) ToPoint(e *E) *write.Point {
 	// parse time
 	if r.timeIndex.Type.Kind() == reflect.Pointer {
 		// Time *time.Time
-		point.SetTime(*rvalue.FieldByIndex(r.timeIndex.Index).Interface().(*time.Time))
+		point.SetTime(rvalue.FieldByIndex(r.timeIndex.Index).Elem().Interface().(time.Time))
 	} else {
 		// Time time.Time
 		point.SetTime(rvalue.FieldByIndex(r.timeIndex.Index).Interface().(time.Time))
@@ -126,7 +129,11 @@ func (r *InfluxEntityTagHelper[E]) ToPoint(e *E) *write.Point {
 	}
 
 	for k, v := range r.fieldIndex {
-		point.AddField(k, rvalue.FieldByIndex(v.Index).Interface())
+		if v.Type.Kind() == reflect.Pointer {
+			point.AddField(k, rvalue.FieldByIndex(v.Index).Elem().Interface())
+		} else {
+			point.AddField(k, rvalue.FieldByIndex(v.Index).Interface())
+		}
 	}
 	return point
 }
@@ -136,7 +143,6 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-
 	for rows.Next() {
 		record := rows.Record()
 		values := record.Values()
@@ -145,7 +151,15 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 		rvalue := reflect.ValueOf(&row).Elem()
 
 		// set time
-		rvalue.FieldByIndex(r.timeIndex.Index).Set(reflect.ValueOf(record.Time()))
+		fieldVal := rvalue.FieldByIndex(r.timeIndex.Index)
+		if fieldVal.Type().Kind() == reflect.Ptr {
+			// Create new pointer to value
+			newVal := reflect.New(time_type)
+			newVal.Elem().Set(reflect.ValueOf(record.Time()))
+			rvalue.FieldByIndex(r.timeIndex.Index).Set(newVal)
+		} else {
+			rvalue.FieldByIndex(r.timeIndex.Index).Set(reflect.ValueOf(record.Time()))
+		}
 
 		for s, v := range values {
 			fmt.Printf("key: %+v, value:%+v \n", s, v)
@@ -168,49 +182,85 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 				}
 
 				switch fi.Type.Kind() {
-				//case reflect.Invalid:
-				//case reflect.Bool:
-
 				case reflect.Int:
-					fieldVal.Set(reflect.ValueOf(int(val.Int())))
-				case reflect.Int8:
-					fieldVal.Set(reflect.ValueOf(int8(val.Int())))
-				case reflect.Int16:
-					fieldVal.Set(reflect.ValueOf(int16(val.Int())))
-				case reflect.Int32:
-					fieldVal.Set(reflect.ValueOf(int32(val.Int())))
+					if v, e := toKindOfInt(reflect.Int, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetInt(v)
+					}
 
-					//case reflect.Int64:
+				case reflect.Int8:
+					if v, e := toKindOfInt(reflect.Int8, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetInt(v)
+					}
+
+				case reflect.Int16:
+					if v, e := toKindOfInt(reflect.Int16, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetInt(v)
+					}
+				case reflect.Int32:
+					if v, e := toKindOfInt(reflect.Int32, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetInt(v)
+					}
+
+				case reflect.Int64:
+					if v, e := toKindOfInt(reflect.Int64, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetInt(v)
+					}
 
 				case reflect.Uint:
-					fieldVal.Set(reflect.ValueOf(uint(val.Uint())))
+					if v, e := toKindOfUint(reflect.Uint, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetUint(v)
+					}
 				case reflect.Uint8:
-					fieldVal.Set(reflect.ValueOf(uint8(val.Uint())))
+					if v, e := toKindOfUint(reflect.Uint8, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetUint(v)
+					}
 				case reflect.Uint16:
-					fieldVal.Set(reflect.ValueOf(uint16(val.Uint())))
+					if v, e := toKindOfUint(reflect.Uint16, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetUint(v)
+					}
 				case reflect.Uint32:
-					fieldVal.Set(reflect.ValueOf(uint32(val.Uint())))
+					if v, e := toKindOfUint(reflect.Uint32, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetUint(v)
+					}
 
-					//case reflect.Uint64:
-					//case reflect.Uintptr:
+				case reflect.Uint64:
+					if v, e := toKindOfUint(reflect.Uint64, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetUint(v)
+					}
 
 				case reflect.Float32:
-					fieldVal.Set(reflect.ValueOf(float32(val.Float())))
+					if v, e := toKindOfFloat(reflect.Float32, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetFloat(v)
+					}
 
-					//case reflect.Float64:
-
-				//case reflect.Complex64:
-				//case reflect.Complex128:
-				//case reflect.Array:
-				//case reflect.Chan:
-				//case reflect.Func:
-				//case reflect.Interface:
-				//case reflect.Map:
-				//case reflect.Pointer:
-				//case reflect.Slice:
-				//case reflect.String:
-				//case reflect.Struct:
-				//case reflect.UnsafePointer:
+				case reflect.Float64:
+					if v, e := toKindOfFloat(reflect.Float64, &val); e != nil {
+						err = errors.Join(err, e)
+					} else {
+						fieldVal.SetFloat(v)
+					}
 				default:
 					fieldVal.Set(val)
 
@@ -219,6 +269,76 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 			}
 		}
 		res = append(res, row)
+	}
+	return
+}
+
+func in[E comparable](t E, v ...E) bool {
+	for i := range v {
+		if t == v[i] {
+			return true
+		}
+	}
+	return false
+}
+
+func toKindOfInt(kind reflect.Kind, value *reflect.Value) (i int64, err error) {
+	if in[reflect.Kind](kind, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64) {
+		i = value.Int()
+		if kind == reflect.Int && math.MinInt <= i && i <= math.MaxInt {
+			i = int64(int(i))
+		} else if kind == reflect.Int64 {
+			i = int64(i)
+		} else if kind == reflect.Int32 && math.MinInt32 <= i && i <= math.MaxInt32 {
+			i = int64(int32(i))
+		} else if kind == reflect.Int16 && math.MinInt16 <= i && i <= math.MaxInt16 {
+			i = int64(int16(i))
+		} else if kind == reflect.Int8 && math.MinInt8 <= i && i <= math.MaxInt8 {
+			i = int64(int8(i))
+		} else {
+			err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
+		}
+	} else {
+		err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
+	}
+
+	return
+}
+func toKindOfUint(kind reflect.Kind, value *reflect.Value) (i uint64, err error) {
+	if in[reflect.Kind](kind, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64) {
+		i = value.Uint()
+		if kind == reflect.Uint && i <= math.MaxUint {
+			i = uint64(uint(i))
+		} else if kind == reflect.Uint64 {
+			i = uint64(i)
+		} else if kind == reflect.Uint32 && i <= math.MaxUint32 {
+			i = uint64(uint32(i))
+		} else if kind == reflect.Uint16 && i <= math.MaxUint16 {
+			i = uint64(uint16(i))
+		} else if kind == reflect.Uint8 && i <= math.MaxUint8 {
+			i = uint64(uint8(i))
+		} else {
+			err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
+		}
+	} else {
+		err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
+	}
+
+	return
+}
+
+func toKindOfFloat(kind reflect.Kind, value *reflect.Value) (i float64, err error) {
+	if in[reflect.Kind](kind, reflect.Float32, reflect.Float64) {
+		i = value.Float()
+		if kind == reflect.Float32 && math.SmallestNonzeroFloat32 <= i && i <= math.MaxFloat32 {
+			i = float64(float32(i))
+		} else if kind == reflect.Float64 {
+			i = float64(i)
+		} else {
+			err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
+		}
+	} else {
+		err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
 	}
 	return
 }
