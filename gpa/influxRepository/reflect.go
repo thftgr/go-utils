@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/thftgr/go-utils/utils"
 	"math"
 	"reflect"
 	"strings"
@@ -151,8 +152,8 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 		rvalue := reflect.ValueOf(&row).Elem()
 
 		// set time
-		fieldVal := rvalue.FieldByIndex(r.timeIndex.Index)
-		if fieldVal.Type().Kind() == reflect.Ptr {
+		timeVal := rvalue.FieldByIndex(r.timeIndex.Index)
+		if timeVal.Type().Kind() == reflect.Ptr {
 			// Create new pointer to value
 			newVal := reflect.New(time_type)
 			newVal.Elem().Set(reflect.ValueOf(record.Time()))
@@ -273,17 +274,8 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 	return
 }
 
-func in[E comparable](t E, v ...E) bool {
-	for i := range v {
-		if t == v[i] {
-			return true
-		}
-	}
-	return false
-}
-
 func toKindOfInt(kind reflect.Kind, value *reflect.Value) (i int64, err error) {
-	if in[reflect.Kind](kind, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64) {
+	if utils.In[reflect.Kind](kind, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64) {
 		i = value.Int()
 		if kind == reflect.Int && math.MinInt <= i && i <= math.MaxInt {
 			i = int64(int(i))
@@ -301,11 +293,10 @@ func toKindOfInt(kind reflect.Kind, value *reflect.Value) (i int64, err error) {
 	} else {
 		err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
 	}
-
 	return
 }
 func toKindOfUint(kind reflect.Kind, value *reflect.Value) (i uint64, err error) {
-	if in[reflect.Kind](kind, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64) {
+	if utils.In[reflect.Kind](kind, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64) {
 		i = value.Uint()
 		if kind == reflect.Uint && i <= math.MaxUint {
 			i = uint64(uint(i))
@@ -323,12 +314,11 @@ func toKindOfUint(kind reflect.Kind, value *reflect.Value) (i uint64, err error)
 	} else {
 		err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
 	}
-
 	return
 }
 
 func toKindOfFloat(kind reflect.Kind, value *reflect.Value) (i float64, err error) {
-	if in[reflect.Kind](kind, reflect.Float32, reflect.Float64) {
+	if utils.In[reflect.Kind](kind, reflect.Float32, reflect.Float64) {
 		i = value.Float()
 		if kind == reflect.Float32 && math.SmallestNonzeroFloat32 <= i && i <= math.MaxFloat32 {
 			i = float64(float32(i))
