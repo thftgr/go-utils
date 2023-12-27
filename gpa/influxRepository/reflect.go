@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
-	"github.com/thftgr/go-utils/utils"
 	"math"
 	"reflect"
 	"strings"
@@ -14,7 +13,8 @@ import (
 
 var p_time_type = reflect.TypeOf((*time.Time)(nil))
 var time_type = reflect.TypeOf((*time.Time)(nil)).Elem()
-var p_string_type = reflect.TypeOf((*string)(nil))
+
+// var p_string_type = reflect.TypeOf((*string)(nil))
 var string_type = reflect.TypeOf((*string)(nil)).Elem()
 
 type InfluxEntityTagHelper[E InfluxEntity] struct {
@@ -180,6 +180,18 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 				}
 
 				switch fi.Type.Kind() {
+				//case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				//	//이 방식으로 하는경우 오버플로우 발생시 -1로 셋팅됨,
+				//	if utils.In[reflect.Kind](val.Kind(), reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64) {
+				//		fieldVal.SetInt(val.Int())
+				//	}
+				//
+				//case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				//	//이 방식으로 하는경우 오버플로우 발생시 -1로 셋팅됨,
+				//	if utils.In[reflect.Kind](val.Kind(), reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64) {
+				//		fieldVal.SetUint(val.Uint())
+				//	}
+
 				case reflect.Int:
 					if v, e := toKindOfInt(reflect.Int, &val); e != nil {
 						err = errors.Join(err, e)
@@ -273,60 +285,117 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 }
 
 func toKindOfInt(kind reflect.Kind, value *reflect.Value) (i int64, err error) {
-	if utils.In[reflect.Kind](kind, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64) {
+	switch kind { // 사용율이 좋은것부터 배치
+	case reflect.Int64:
 		i = value.Int()
-		if kind == reflect.Int && math.MinInt <= i && i <= math.MaxInt {
-			i = int64(int(i))
-		} else if kind == reflect.Int64 {
-			i = int64(i)
-		} else if kind == reflect.Int32 && math.MinInt32 <= i && i <= math.MaxInt32 {
-			i = int64(int32(i))
-		} else if kind == reflect.Int16 && math.MinInt16 <= i && i <= math.MaxInt16 {
-			i = int64(int16(i))
-		} else if kind == reflect.Int8 && math.MinInt8 <= i && i <= math.MaxInt8 {
-			i = int64(int8(i))
+		// 처리할게 없음.
+
+	case reflect.Int:
+		i = value.Int()
+		if i < math.MinInt {
+			err = fmt.Errorf("cannot convert %s to int. underflow '%d'", value.Kind().String(), i)
+		} else if math.MaxInt < i {
+			err = fmt.Errorf("cannot convert %s to int. overflow '%d'", value.Kind().String(), i)
 		} else {
-			err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
+			i = int64(int(i))
 		}
-	} else {
+
+	case reflect.Int32:
+		i = value.Int()
+		if i < math.MinInt32 {
+			err = fmt.Errorf("cannot convert %s to int32. underflow '%d'", value.Kind().String(), i)
+		} else if math.MaxInt32 < i {
+			err = fmt.Errorf("cannot convert %s to int32. overflow '%d'", value.Kind().String(), i)
+		} else {
+			i = int64(int32(i))
+		}
+
+	case reflect.Int16:
+		i = value.Int()
+		if i < math.MinInt16 {
+			err = fmt.Errorf("cannot convert %s to int16. underflow '%d'", value.Kind().String(), i)
+		} else if math.MaxInt16 < i {
+			err = fmt.Errorf("cannot convert %s to int16. overflow '%d'", value.Kind().String(), i)
+		} else {
+			i = int64(int16(i))
+		}
+
+	case reflect.Int8:
+		i = value.Int()
+		if i < math.MinInt8 {
+			err = fmt.Errorf("cannot convert %s to int8. underflow '%d'", value.Kind().String(), i)
+		} else if math.MaxInt8 < i {
+			err = fmt.Errorf("cannot convert %s to int8. overflow '%d'", value.Kind().String(), i)
+		} else {
+			i = int64(int8(i))
+		}
+
+	default:
 		err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
 	}
 	return
 }
 func toKindOfUint(kind reflect.Kind, value *reflect.Value) (i uint64, err error) {
-	if utils.In[reflect.Kind](kind, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64) {
+	switch kind {
+	case reflect.Uint64:
 		i = value.Uint()
-		if kind == reflect.Uint && i <= math.MaxUint {
-			i = uint64(uint(i))
-		} else if kind == reflect.Uint64 {
-			i = uint64(i)
-		} else if kind == reflect.Uint32 && i <= math.MaxUint32 {
-			i = uint64(uint32(i))
-		} else if kind == reflect.Uint16 && i <= math.MaxUint16 {
-			i = uint64(uint16(i))
-		} else if kind == reflect.Uint8 && i <= math.MaxUint8 {
-			i = uint64(uint8(i))
+		// 처리할게 없음.
+
+	case reflect.Uint:
+		i = value.Uint()
+		if math.MaxUint < i {
+			err = fmt.Errorf("cannot convert %s to uint. overflow '%d'", value.Kind().String(), i)
 		} else {
-			err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
+			i = uint64(uint(i))
 		}
-	} else {
+
+	case reflect.Uint32:
+		i = value.Uint()
+		if math.MaxUint32 < i {
+			err = fmt.Errorf("cannot convert %s to uint32. overflow '%d'", value.Kind().String(), i)
+		} else {
+			i = uint64(uint32(i))
+		}
+
+	case reflect.Uint16:
+		i = value.Uint()
+		if math.MaxUint16 < i {
+			err = fmt.Errorf("cannot convert %s to uint16. overflow '%d'", value.Kind().String(), i)
+		} else {
+			i = uint64(uint16(i))
+		}
+
+	case reflect.Uint8:
+		i = value.Uint()
+		if math.MaxUint8 < i {
+			err = fmt.Errorf("cannot convert %s to uint8. overflow '%d'", value.Kind().String(), i)
+		} else {
+			i = uint64(uint8(i))
+		}
+
+	default:
 		err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
 	}
 	return
 }
 
-func toKindOfFloat(kind reflect.Kind, value *reflect.Value) (i float64, err error) {
-	if utils.In[reflect.Kind](kind, reflect.Float32, reflect.Float64) {
-		i = value.Float()
-		if kind == reflect.Float32 && math.SmallestNonzeroFloat32 <= i && i <= math.MaxFloat32 {
-			i = float64(float32(i))
-		} else if kind == reflect.Float64 {
-			i = float64(i)
+func toKindOfFloat(kind reflect.Kind, value *reflect.Value) (f float64, err error) {
+	f = value.Float()
+	switch kind {
+	case reflect.Float64:
+		// 처리할게 없음.
+
+	case reflect.Float32:
+		if f < math.SmallestNonzeroFloat32 {
+			err = fmt.Errorf("cannot convert %s to float32. underflow '%f'", value.Kind().String(), f)
+		} else if math.MaxFloat32 < f {
+			err = fmt.Errorf("cannot convert %s to float32. overflow '%f'", value.Kind().String(), f)
 		} else {
-			err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
+			f = float64(float32(f))
 		}
-	} else {
+	default:
 		err = fmt.Errorf("cannot convert %s to %s", value.Kind().String(), kind.String())
 	}
 	return
+
 }

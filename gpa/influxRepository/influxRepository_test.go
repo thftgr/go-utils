@@ -3,8 +3,10 @@ package influxRepository
 import (
 	"context"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"math"
 	"net/http"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -70,5 +72,26 @@ func TestInfluxRepositoryImpl_ToPoint(t *testing.T) {
 	//} else {
 	//	t.Log("deleted.")
 	//}
+
+}
+
+func Test_reflectSet(t *testing.T) {
+	i8v := int64(math.MaxInt64)
+	type S struct {
+		I64 int8
+	}
+	s := S{}
+	reflect.ValueOf(&s).Elem().FieldByIndex([]int{0}).SetInt(reflect.ValueOf(i8v).Int())
+	t.Log(s.I64)
+
+}
+func Test_reflectSet2(t *testing.T) {
+	i8v := int64(math.MaxInt64)
+	type S struct {
+		I64 int8
+	}
+	s := S{}
+	reflect.ValueOf(&s).Elem().FieldByIndex([]int{0}).Set(reflect.ValueOf(i8v))
+	t.Log(s.I64)
 
 }
