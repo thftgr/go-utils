@@ -28,5 +28,5 @@ type CrudRepository[E Entity[ID], ID Id] interface {
 // 일반적인 사용 케이스에서는 삽입, 조회를 주로 사용함.
 // 삭제는 잘 사용하지 않음으로 정의하지 않았음.
 type TimeSeriesRepository[E TimeSeriesEntity] interface {
-	Save(E) error
+	Save(E) error // async 의경우 error없음.
 }

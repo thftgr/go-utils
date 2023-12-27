@@ -104,6 +104,8 @@ func (r *InfluxRepositoryImpl[E]) ToPoint(e E) (p *write.Point) {
 	return
 }
 
+// FromPoints E 가 InfluxEntityDecoder 를 구현하지 않은경우 reflection 으로 처리됨. 이로인해 성능문제가 발생할수있음.
+// If FromPoints E does not implement InfluxEntityDecoder, it will be treated as reflection, which may cause performance problems.
 func (r *InfluxRepositoryImpl[E]) FromPoints(rows *api.QueryTableResult) (res []E, err error) {
 	for rows.Next() {
 		record := rows.Record()
@@ -250,9 +252,15 @@ func (r *InfluxRepositoryImpl[E]) Save(e E) error {
 }
 
 func (r *InfluxRepositoryImpl[E]) SaveAndFlush(e E) error {
+	errCh := r.WriteAPI.Errors()
 	r.WriteAPI.WritePoint(r.ToPoint(e))
 	r.WriteAPI.Flush()
-	return nil
+	select {
+	case err := <-errCh:
+		return err
+	default:
+		return nil
+	}
 }
 
 func (r *InfluxRepositoryImpl[E]) FindAllByTime(start time.Time, stop time.Time) (res []E, err error) {
