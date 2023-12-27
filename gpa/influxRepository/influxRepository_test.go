@@ -3,7 +3,8 @@ package influxRepository
 import (
 	"context"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"math"
+	protocol "github.com/influxdata/line-protocol"
+	"github.com/thftgr/go-utils/utils"
 	"net/http"
 	"os"
 	"reflect"
@@ -13,27 +14,30 @@ import (
 
 type RepositoryTestEntity struct {
 	Measurement `json:"-"  influxdb:"measurement:test"`
-	Name        string     `influxdb:"tag:name"`
-	LogString   *string    `influxdb:"field:log"`
-	Status      *int64     `influxdb:"field:status"`
-	Time        *time.Time `influxdb:"time"`
+	Name        string    `influxdb:"tag:name"`
+	LogString   string    `influxdb:"field:log"`
+	Status      int       `influxdb:"field:status"`
+	Time        time.Time `influxdb:"time"`
 }
 
 func (r RepositoryTestEntity) GetTime() time.Time {
-	return *r.Time
+	return r.Time
 }
 
 type RepositoryTestEntityRepository struct {
 	InfluxRepository[RepositoryTestEntity]
 }
 
-func TestInfluxRepositoryImpl_ToPoint(t *testing.T) {
+func TestInfluxRepositoryImpl_FullTest(t *testing.T) {
 	INFLUXDB_TOKEN := os.Getenv("INFLUXDB_TOKEN")
 	INFLUXDB_BUCKET := os.Getenv("INFLUXDB_BUCKET")
 	INFLUXDB_ORG := os.Getenv("INFLUXDB_ORG")
 	INFLUXDB_URL := os.Getenv("INFLUXDB_URL")
-	t.Logf("INFLUXDB_TOKEN: %s, INFLUXDB_BUCKET: %s, INFLUXDB_ORG: %s, INFLUXDB_URL: %s", INFLUXDB_TOKEN, INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_URL)
-
+	//t.Logf("INFLUXDB_TOKEN:  %s", INFLUXDB_TOKEN)
+	t.Logf("INFLUXDB_BUCKET: %s", INFLUXDB_BUCKET)
+	t.Logf("INFLUXDB_ORG:    %s", INFLUXDB_ORG)
+	t.Logf("INFLUXDB_URL:    %s", INFLUXDB_URL)
+	now := time.Now().UTC()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	repo := &RepositoryTestEntityRepository{
@@ -41,57 +45,69 @@ func TestInfluxRepositoryImpl_ToPoint(t *testing.T) {
 			INFLUXDB_ORG, INFLUXDB_BUCKET, influxdb2.NewClient(INFLUXDB_URL, INFLUXDB_TOKEN), ctx, time.Second*5,
 		),
 	}
-	_name := "test"
-	_logstring := "this is log"
-	_status := int64(http.StatusOK)
-	_time := time.Now()
-	entity := &RepositoryTestEntity{
-		Name:      _name,
-		LogString: &_logstring,
-		Status:    &_status,
-		Time:      &_time,
+	var testTags = []*protocol.Tag{
+		{Key: "name", Value: "test-name"},
 	}
-	testTime := time.Now()
-	if err := repo.Save(*entity); err != nil {
+	var testEntities = []RepositoryTestEntity{
+		{Name: "test-name", LogString: "log string1", Status: http.StatusOK, Time: now},
+		{Name: "test-name", LogString: "log string2", Status: http.StatusOK, Time: now.Add(-time.Second)},
+	}
+
+	for i := range testEntities { // 테스트 데이터 삽입 겸 save 테스트
+		if err := repo.SaveAndFlush(testEntities[i]); err != nil {
+			t.Error(err)
+		}
+	}
+	utils.ReverseSlice[RepositoryTestEntity](testEntities)
+	var startT, stopT = now.Add(-(time.Second * 5)), now.Add(time.Second)
+	var startD, stopD = now.Sub(now.Add(-(time.Second * 5))), time.Second
+
+	if e, err := repo.FindAllByTime(startT, stopT); err != nil { // -5s ~ now
 		t.Error(err)
-	} else {
-		t.Log("saved.")
+	} else if !reflect.DeepEqual(e, testEntities) {
+		t.Errorf("FindAllByTime() gotRes = %v, want %v", e, testEntities)
 	}
 
-	if res, err := repo.FindAllByTimeAfter(testTime); err != nil {
+	if e, err := repo.FindAllByDuration(startD, stopD); err != nil { // -5s ~ now
 		t.Error(err)
-	} else if res == nil || len(res) < 1 {
-		t.Errorf("result should return 1 or more rows but return nil or empty slice. err: %+v", err)
-		t.Errorf("res: %+v", res)
-	} else {
-		t.Logf("res: %+v", res)
+	} else if !reflect.DeepEqual(e, testEntities[:1]) {
+		t.Errorf("FindAllByDuration() gotRes = %v, want %v", e, testEntities[:1])
 	}
 
-	//if err := repo.DeleteAllByTimeAfter(testTime); err != nil {
-	//	t.Error(err)
-	//} else {
-	//	t.Log("deleted.")
-	//}
-
-}
-
-func Test_reflectSet(t *testing.T) {
-	i8v := int64(math.MaxInt64)
-	type S struct {
-		I64 int8
+	if e, err := repo.FindAllByTagsAndTime(startT, stopT, testTags); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(e, testEntities) {
+		t.Errorf("FindAllByTagsAndTime() gotRes = %v, want %v", e, testEntities)
 	}
-	s := S{}
-	reflect.ValueOf(&s).Elem().FieldByIndex([]int{0}).SetInt(reflect.ValueOf(i8v).Int())
-	t.Log(s.I64)
 
-}
-func Test_reflectSet2(t *testing.T) {
-	i8v := int64(math.MaxInt64)
-	type S struct {
-		I64 int8
+	if e, err := repo.FindAllByTagsAndDuration(startD, stopD, testTags); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(e, testEntities[:1]) {
+		t.Errorf("FindAllByTagsAndDuration() gotRes = %v, want %v", e, testEntities[:1])
 	}
-	s := S{}
-	reflect.ValueOf(&s).Elem().FieldByIndex([]int{0}).Set(reflect.ValueOf(i8v))
-	t.Log(s.I64)
+
+	if e, err := repo.FindAllByTimeAfter(startT); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(e, testEntities) {
+		t.Errorf("FindAllByTimeAfter() gotRes = %v, want %v", e, testEntities)
+	}
+
+	if e, err := repo.FindAllByDurationAfter(startD); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(e, testEntities) {
+		t.Errorf("FindAllByDurationAfter() gotRes = %v, want %v", e, testEntities)
+	}
+
+	if e, err := repo.FindAllByTagsAndTimeAfter(startT, testTags); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(e, testEntities) {
+		t.Errorf("FindAllByTagsAndTimeAfter() gotRes = %v, want %v", e, testEntities)
+	}
+
+	if e, err := repo.FindAllByTagsAndDurationAfter(startD, testTags); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(e, testEntities) {
+		t.Errorf("FindAllByTagsAndDurationAfter() gotRes = %v, want %v", e, testEntities)
+	}
 
 }

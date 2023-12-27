@@ -160,7 +160,7 @@ func (r *InfluxEntityTagHelper[E]) FromRows(rows *api.QueryTableResult) (res []E
 		}
 
 		for s, v := range values {
-			fmt.Printf("key: %+v, value:%+v \n", s, v)
+			//fmt.Printf("key: %+v, value:%+v \n", s, v)
 			// set tag fields if valid
 			if ti := r.tagIndex[s]; ti != nil {
 				if v, ok := v.(string); ok {
