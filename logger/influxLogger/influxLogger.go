@@ -16,7 +16,7 @@ type InfluxLogger interface {
 }
 
 type InfluxLoggerImpl struct {
-	Tags        []protocol.Tag
+	Tags        []*protocol.Tag
 	Writer      api.WriteAPI
 	GroupName   string
 	Level       logger.LEVEL
@@ -96,8 +96,8 @@ func (l *InfluxLoggerImpl) printf(skip int, level logger.LEVEL, format string, a
 
 func (l *InfluxLoggerImpl) post(level logger.LEVEL, data string) {
 	point := influxdb2.NewPointWithMeasurement("log").SetTime(time.Now())
-	for i := range l.Tags {
-		point.AddTag(l.Tags[i].Key, l.Tags[i].Value)
+	for _, v := range l.Tags {
+		point.AddTag(v.Key, v.Value)
 	}
 	if l.GroupName != "" {
 		point.AddTag("group", l.GroupName)
