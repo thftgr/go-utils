@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/labstack/echo/v4"
-	"github.com/thftgr/go-utils/logger/consoleLogger"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 )
@@ -51,8 +49,7 @@ func TestJsonFetch_GET(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
@@ -88,8 +85,7 @@ func TestJsonFetch_HEAD(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
@@ -125,8 +121,7 @@ func TestJsonFetch_POST(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
@@ -162,8 +157,7 @@ func TestJsonFetch_PUT(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
@@ -199,8 +193,7 @@ func TestJsonFetch_PATCH(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
@@ -236,8 +229,7 @@ func TestJsonFetch_DELETE(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
@@ -273,8 +265,7 @@ func TestJsonFetch_CONNECT(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
@@ -310,8 +301,7 @@ func TestJsonFetch_OPTIONS(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
@@ -347,8 +337,7 @@ func TestJsonFetch_TRACE(t *testing.T) {
 	defer shutdown()
 
 	time.Sleep(time.Second)
-	log := &consoleLogger.ConsoleLoggerImpl{Out: os.Stdout, Err: os.Stderr}
-	fetch := NewJsonFetch(nil, log, time.Second*5)
+	fetch := NewJsonFetch(nil, time.Second*5)
 
 	tests := []struct {
 		name             string
