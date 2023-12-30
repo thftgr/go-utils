@@ -18,20 +18,27 @@ var time_type = reflect.TypeOf((*time.Time)(nil)).Elem()
 var string_type = reflect.TypeOf((*string)(nil)).Elem()
 
 type InfluxEntityTagHelper[E InfluxEntity] struct {
-	measurement string
-	tagIndex    map[string]*reflect.StructField
-	fieldIndex  map[string]*reflect.StructField
-	timeIndex   *reflect.StructField
+	measurement        string
+	tagIndex           map[string]*reflect.StructField
+	fieldIndex         map[string]*reflect.StructField
+	timeIndex          *reflect.StructField
+	isImplementEncoder bool
+	isImplementDecoder bool
 }
 
 // NewInfluxEntityTagHelper 요구사항에 부합하지 않은경우 error 대신 panic 을 발생시킵니다.
 // 반복해서 호출하도록 설계하지 말고 엔티티당 최초 1회만 호출할수있도록 설계하는것을 권장
 // - repo 에서 초기화할때 가지고 있는것을 추천함.
 func NewInfluxEntityTagHelper[E InfluxEntity]() (r *InfluxEntityTagHelper[E]) {
+
 	r = &InfluxEntityTagHelper[E]{
 		tagIndex:   make(map[string]*reflect.StructField),
 		fieldIndex: make(map[string]*reflect.StructField),
 	}
+	var e E
+	_, r.isImplementEncoder = any(e).(InfluxEntityEncoder)
+	_, r.isImplementDecoder = any(e).(InfluxEntityDecoder)
+
 	rtype := reflect.TypeOf((*E)(nil))
 	for rtype.Kind() == reflect.Ptr {
 		rtype = rtype.Elem() // 대상을 가져옴 = **E => *E => E
