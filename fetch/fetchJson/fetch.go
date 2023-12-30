@@ -2,7 +2,6 @@ package fetchJson
 
 import (
 	"errors"
-	"github.com/thftgr/go-utils/logger"
 	"io"
 	"net/http"
 	"time"
@@ -10,14 +9,12 @@ import (
 
 type JsonFetch struct {
 	Header http.Header
-	Logger logger.Logger
 	Client *http.Client
 }
 
-func NewJsonFetch(header http.Header, logger logger.Logger, timeout time.Duration) *JsonFetch {
+func NewJsonFetch(header http.Header, timeout time.Duration) *JsonFetch {
 	return &JsonFetch{
 		Header: header,
-		Logger: logger,
 		Client: &http.Client{Timeout: timeout},
 	}
 }
