@@ -1,4 +1,4 @@
-package consoleLogger
+package consolelogger
 
 import (
 	"bytes"

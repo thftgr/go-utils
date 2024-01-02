@@ -1,4 +1,4 @@
-package loggerAdapter
+package loggeradapter
 
 import (
 	"encoding/json"
