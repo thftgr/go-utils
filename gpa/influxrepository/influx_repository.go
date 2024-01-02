@@ -1,4 +1,4 @@
-package influxRepository
+package influxrepository
 
 import (
 	"bytes"

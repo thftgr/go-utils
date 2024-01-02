@@ -1,4 +1,4 @@
-package gormRepository
+package gormrepository
 
 import (
 	"database/sql"

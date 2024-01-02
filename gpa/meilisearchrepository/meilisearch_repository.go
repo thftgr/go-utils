@@ -1,4 +1,4 @@
-package meilisearchRepository
+package meilisearchrepository
 
 import (
 	"errors"

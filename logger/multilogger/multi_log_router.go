@@ -1,4 +1,4 @@
-package multiLogger
+package multilogger
 
 import "github.com/thftgr/go-utils/logger"
 

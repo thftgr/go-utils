@@ -1,4 +1,4 @@
-package fileLogger
+package filelogger
 
 import (
 	"fmt"

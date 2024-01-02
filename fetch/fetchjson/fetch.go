@@ -1,4 +1,4 @@
-package fetchJson
+package fetchjson
 
 import (
 	"errors"

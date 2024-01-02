@@ -1,4 +1,4 @@
-package influxLogger
+package influxlogger
 
 import (
 	"bytes"
