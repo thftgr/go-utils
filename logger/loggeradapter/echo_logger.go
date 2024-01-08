@@ -16,26 +16,29 @@ type EchoAdapter struct {
 	Logger logger.SkipLogger
 }
 
-func (e *EchoAdapter) Output() io.Writer {
-	panic("Do not use this method.All must be handled in the Logger constructor.")
+func (e *EchoAdapter) Write(p []byte) (n int, err error) {
+	e.Info(string(p))
+	return len(p), nil
 }
+
+func (e *EchoAdapter) Output() io.Writer { return e }
 func (e *EchoAdapter) SetOutput(w io.Writer) {
-	panic("Do not use this method.All must be handled in the Logger constructor.")
+	panic("Do not use this method.SetOutput must be handled in the Logger constructor.")
 }
 func (e *EchoAdapter) Prefix() string {
-	panic("Do not use this method.All must be handled in the Logger constructor.")
+	panic("Do not use this method.Prefix must be handled in the Logger constructor.")
 }
 func (e *EchoAdapter) SetPrefix(p string) {
-	panic("Do not use this method.All must be handled in the Logger constructor.")
+	panic("Do not use this method.SetPrefix must be handled in the Logger constructor.")
 }
 func (e *EchoAdapter) Level() log.Lvl {
-	panic("Do not use this method.All must be handled in the Logger constructor.")
+	panic("Do not use this method.Level must be handled in the Logger constructor.")
 }
 func (e *EchoAdapter) SetLevel(v log.Lvl) {
-	panic("Do not use this method.All must be handled in the Logger constructor.")
+	panic("Do not use this method.SetLevel must be handled in the Logger constructor.")
 }
 func (e *EchoAdapter) SetHeader(h string) {
-	panic("Do not use this method.All must be handled in the Logger constructor.")
+	panic("Do not use this method.SetHeader must be handled in the Logger constructor.")
 }
 
 func (e *EchoAdapter) Print(a ...interface{}) {
