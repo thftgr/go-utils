@@ -17,7 +17,7 @@ type EchoAdapter struct {
 }
 
 func (e *EchoAdapter) Write(p []byte) (n int, err error) {
-	e.Info(string(p))
+	e.Logger.SInfo(1, string(p))
 	return len(p), nil
 }
 
