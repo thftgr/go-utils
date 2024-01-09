@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/thftgr/go-utils/gpa"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -14,6 +15,7 @@ type MongoEntityId interface {
 
 type MongoEntity[ID MongoEntityId] interface {
 	gpa.Entity[ID]
+
 	Collection() string
 }
 
@@ -35,18 +37,29 @@ func NewMongoRepository[E MongoEntity[ID], ID MongoEntityId](collection *mongo.C
 }
 
 func (m *MongoRepositoryImpl[E, ID]) Save(e E) (err error) {
-	_, err = m.Collection.UpdateOne(m.Context, bson.M{"_id": e.GetId()}, bson.M{"$set": e}, options.Update().SetUpsert(true))
+	if e.GetId() == nil {
+		_, err = m.Collection.InsertOne(m.Context, e, options.InsertOne())
+
+	} else if v, ok := any(e.GetId()).(primitive.ObjectID); ok && v.IsZero() {
+		_, err = m.Collection.InsertOne(m.Context, e, options.InsertOne())
+
+	} else if v, ok := any(e.GetId()).(*primitive.ObjectID); ok && v.IsZero() {
+		_, err = m.Collection.InsertOne(m.Context, e, options.InsertOne())
+
+	} else {
+		_, err = m.Collection.UpdateOne(m.Context, bson.M{"_id": e.GetId()}, bson.M{"$set": e}, options.Update().SetUpsert(true))
+
+	}
 	return
 }
 
 func (m *MongoRepositoryImpl[E, ID]) SaveAll(e ...E) (count int64, err error) {
 	for i := range e {
-		res, err2 := m.Collection.UpdateOne(m.Context, bson.M{"_id": e[i].GetId()}, bson.M{"$set": e[i]}, options.Update().SetUpsert(true))
-		if err2 != nil {
-			err = err2
+		if err = m.Save(e[i]); err != nil {
 			break
+		} else {
+			count++
 		}
-		count += res.ModifiedCount + res.UpsertedCount
 	}
 	return
 }
