@@ -4,12 +4,12 @@ import (
 	"context"
 	"github.com/thftgr/go-utils/gpa"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoEntityId interface {
+	IsZero() bool
 	gpa.Id
 }
 
@@ -32,23 +32,11 @@ func NewMongoRepositoryImpl[E MongoEntity[ID], ID MongoEntityId](collection *mon
 	return &MongoRepositoryImpl[E, ID]{Collection: collection, Context: ctx}
 }
 
-func NewMongoRepository[E MongoEntity[ID], ID MongoEntityId](collection *mongo.Collection, ctx context.Context) MongoRepository[E, ID] {
-	return &MongoRepositoryImpl[E, ID]{Collection: collection, Context: ctx}
-}
-
 func (m *MongoRepositoryImpl[E, ID]) Save(e E) (err error) {
-	if e.GetId() == nil {
+	if e.GetId().IsZero() {
 		_, err = m.Collection.InsertOne(m.Context, e, options.InsertOne())
-
-	} else if v, ok := any(e.GetId()).(primitive.ObjectID); ok && v.IsZero() {
-		_, err = m.Collection.InsertOne(m.Context, e, options.InsertOne())
-
-	} else if v, ok := any(e.GetId()).(*primitive.ObjectID); ok && v.IsZero() {
-		_, err = m.Collection.InsertOne(m.Context, e, options.InsertOne())
-
 	} else {
 		_, err = m.Collection.UpdateOne(m.Context, bson.M{"_id": e.GetId()}, bson.M{"$set": e}, options.Update().SetUpsert(true))
-
 	}
 	return
 }
