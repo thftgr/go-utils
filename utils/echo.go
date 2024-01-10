@@ -2,12 +2,17 @@ package utils
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/thftgr/go-utils/http/header"
 	"github.com/thftgr/go-utils/logger"
 	"net/http"
 )
 
 type EchoUtils struct {
 	E echo.Context
+}
+
+func GetEchoUtils(c echo.Context) *EchoUtils {
+	return &EchoUtils{E: c}
 }
 
 func (e *EchoUtils) GetRequestId() (id string) {
@@ -51,4 +56,12 @@ func (e *EchoUtils) GetLogger() logger.GroupLogger {
 
 func (e *EchoUtils) SetLogger(l logger.GroupLogger) {
 	e.E.Set("logger", l)
+}
+
+func (e *EchoUtils) Accept() (accept []header.Accept) {
+	return header.ParseAccept(e.GetHeader(echo.HeaderAccept))
+}
+
+func (e *EchoUtils) ContentType() (contentType *header.ContentType) {
+	return header.ParseContentType(e.GetHeader(echo.HeaderContentType))
 }
