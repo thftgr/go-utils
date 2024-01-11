@@ -127,18 +127,18 @@ func TestCheckAllowedContentType(t *testing.T) {
 		contentType header.MimeType
 		statusCode  int // statusCode
 	}{
-		{name: "", url: "/application/json", contentType: "*/*", statusCode: http.StatusOK},
+		{name: "", url: "/application/json", contentType: "*/*", statusCode: http.StatusUnsupportedMediaType},
 		{name: "", url: "/application/json", contentType: "application/json", statusCode: http.StatusOK},
-		{name: "", url: "/application/json", contentType: "application/xml", statusCode: http.StatusNotAcceptable},
+		{name: "", url: "/application/json", contentType: "application/xml", statusCode: http.StatusUnsupportedMediaType},
 
 		{name: "", url: "/application/all", contentType: "application/xml", statusCode: http.StatusOK},
 		{name: "", url: "/application/all", contentType: "application/json", statusCode: http.StatusOK},
-		{name: "", url: "/application/all", contentType: "text/html", statusCode: http.StatusNotAcceptable},
+		{name: "", url: "/application/all", contentType: "text/html", statusCode: http.StatusUnsupportedMediaType},
 
-		{name: "", url: "/application/all", contentType: "*/json", statusCode: http.StatusNotAcceptable},
-		{name: "", url: "/application/all", contentType: "/json", statusCode: http.StatusNotAcceptable},
-		{name: "", url: "/application/all", contentType: "application/*", statusCode: http.StatusOK},
-		{name: "", url: "/application/all", contentType: "application/", statusCode: http.StatusNotAcceptable},
+		{name: "", url: "/application/all", contentType: "*/json", statusCode: http.StatusUnsupportedMediaType},
+		{name: "", url: "/application/all", contentType: "/json", statusCode: http.StatusUnsupportedMediaType},
+		{name: "", url: "/application/all", contentType: "application/*", statusCode: http.StatusUnsupportedMediaType},
+		{name: "", url: "/application/all", contentType: "application/", statusCode: http.StatusUnsupportedMediaType},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -148,7 +148,7 @@ func TestCheckAllowedContentType(t *testing.T) {
 				t.Error(err)
 				return
 			}
-			request.Header.Set("accept", tt.contentType.String())
+			request.Header.Set("Content-Type", tt.contentType.String())
 			client := http.Client{Timeout: time.Second}
 			res, err := client.Do(request)
 			if err != nil {
