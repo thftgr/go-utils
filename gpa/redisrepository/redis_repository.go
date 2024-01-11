@@ -2,20 +2,23 @@ package redisrepository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"github.com/thftgr/go-utils/gpa"
+	"time"
 )
 
+// RedisEntityId struct 를 id 로 사용하는경우 fmt.Stringer 인터페이스를 구현.
 type RedisEntityId interface {
 	gpa.Id
-	ToString() string // redis key 가 string 임.
 }
 
+// RedisEntity struct 를 ID 로 사용하는경우 fmt.Stringer 인터페이스를 구현.
 type RedisEntity[ID RedisEntityId] interface {
 	gpa.Entity[ID]
-	GetKey() string
 
-	// 필요한 경우 아래 두 인터페이스를 구현할것.
+	// 필요한 경우 아래 두 인터페이스를 구현.
 	//json.Marshaler
 	//json.Unmarshaler
 
@@ -26,40 +29,58 @@ type RedisEntity[ID RedisEntityId] interface {
 
 type RedisRepository[E RedisEntity[ID], ID RedisEntityId] interface {
 	gpa.CrudRepository[E, ID]
+	Flush()
+	FlushWithContext(ctx context.Context)
 }
 
+// RedisRepositoryImpl
 type RedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId] struct {
 	Context context.Context
-	Pipe    redis.Pipeliner // 필수로 추가해야함
+	DB      *redis.Client // 필수로 추가해야함
+	Timeout *time.Duration
 }
 
-func NewRedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId](ctx context.Context, pipe redis.Pipeliner) *RedisRepositoryImpl[E, ID] {
-	return &RedisRepositoryImpl[E, ID]{Context: ctx, Pipe: pipe}
+func NewRedisRepositoryImpl[E RedisEntity[ID], ID RedisEntityId](ctx context.Context, pipe *redis.Client) *RedisRepositoryImpl[E, ID] {
+	return &RedisRepositoryImpl[E, ID]{Context: ctx, DB: pipe}
 }
-
-func NewRedisRepository[E RedisEntity[ID], ID RedisEntityId](ctx context.Context, pipe redis.Pipeliner) RedisRepository[E, ID] {
-	return &RedisRepositoryImpl[E, ID]{Context: ctx, Pipe: pipe}
+func NewRedisRepositoryImplWithTimeout[E RedisEntity[ID], ID RedisEntityId](ctx context.Context, pipe *redis.Client, timeout time.Duration) *RedisRepositoryImpl[E, ID] {
+	return &RedisRepositoryImpl[E, ID]{Context: ctx, DB: pipe, Timeout: &timeout}
+}
+func (r *RedisRepositoryImpl[E, ID]) GetTimeoutContext() (context.Context, context.CancelFunc) {
+	if r.Timeout == nil {
+		return r.Context, func() {}
+	}
+	return context.WithTimeout(r.Context, *r.Timeout)
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Save(e E) error {
-	return r.Pipe.HMSet(r.Context, e.GetKey(), e).Err()
+	return r.DB.HSet(r.Context, fmt.Sprint(e.GetId()), e).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) SaveAll(e ...E) (count int64, err error) {
+	ctx, cancel := r.GetTimeoutContext()
+	defer cancel()
+	pipe := r.DB.Pipeline()
 	for i := range e {
-		err2 := r.Pipe.HMSet(r.Context, e[i].GetKey(), e[i]).Err()
+		err2 := pipe.HSet(ctx, fmt.Sprint(e[i].GetId()), e[i]).Err() // 여기선 에러가 잘 발생하지 않음.
 		if err2 != nil {
 			err = err2
 			return
 		}
-		count++
 	}
-	_, err = r.Pipe.Exec(r.Context)
+	ce, err := pipe.Exec(ctx)
+	for i := range ce {
+		if ceerr := ce[i].Err(); ceerr != nil {
+			err = errors.Join(err, ce[i].Err())
+		} else {
+			count++
+		}
+	}
 	return
 }
 
 func (r *RedisRepositoryImpl[E, ID]) FindById(id ID) (e E, err error) {
-	err = r.Pipe.HMGet(r.Context, id.ToString()).Scan(&e)
+	err = r.DB.HGetAll(r.Context, fmt.Sprint(id)).Scan(&e)
 	return
 }
 
@@ -76,26 +97,26 @@ func (r *RedisRepositoryImpl[E, ID]) FindAllById(id ...ID) (res []E, err error) 
 }
 
 func (r *RedisRepositoryImpl[E, ID]) Delete(e E) error {
-	return r.Pipe.Del(r.Context, e.GetKey()).Err()
+	return r.DB.Del(r.Context, fmt.Sprint(e.GetId())).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteAll(e ...E) (count int64, err error) {
 	ids := make([]string, len(e))
 	for i := range e {
-		ids[i] = e[i].GetKey()
+		ids[i] = fmt.Sprint(e[i].GetId())
 	}
-	return r.Pipe.Del(r.Context, ids...).Result()
+	return r.DB.Del(r.Context, ids...).Result()
 
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteById(id ID) error {
-	return r.Pipe.Del(r.Context, id.ToString()).Err()
+	return r.DB.Del(r.Context, fmt.Sprint(id)).Err()
 }
 
 func (r *RedisRepositoryImpl[E, ID]) DeleteAllById(id ...ID) (count int64, err error) {
 	ids := make([]string, len(id))
 	for i := range id {
-		ids[i] = id[i].ToString()
+		ids[i] = fmt.Sprint(id[i])
 	}
-	return r.Pipe.Del(r.Context, ids...).Result()
+	return r.DB.Del(r.Context, ids...).Result()
 }
