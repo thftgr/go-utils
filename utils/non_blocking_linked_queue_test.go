@@ -188,22 +188,29 @@ func TestNonBlockingLinkedQueue_PeekNextN(t *testing.T) {
 }
 
 func TestNonBlockingLinkedQueue_Poll(t *testing.T) {
-	type args[E any] struct {
-		p []E
-	}
 	type testCase[E any] struct {
-		name  string
-		q     NonBlockingLinkedQueue[E]
-		args  args[E]
-		wantN int
+		name string
+		q    *NonBlockingLinkedQueue[E]
+		init []E
+		want []E
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotN := tt.q.Poll(tt.args.p); gotN != tt.wantN {
-				t.Errorf("Poll() = %v, want %v", gotN, tt.wantN)
+			tt.q.Add(tt.init...)
+			poll := make([]int, len(tt.want))
+			tt.q.Poll(poll)
+			if !reflect.DeepEqual(tt.want, poll) {
+				t.Errorf("Poll() want = %+v, get %+v", tt.want, poll)
+			} else {
+				peek := tt.q.PeekNextN(len(tt.want))
+				if reflect.DeepEqual(tt.want, peek) {
+					t.Errorf("PeekNextN() want != %+v, get %+v", tt.want, peek)
+				}
 			}
 		})
 	}
@@ -211,39 +218,46 @@ func TestNonBlockingLinkedQueue_Poll(t *testing.T) {
 
 func TestNonBlockingLinkedQueue_PollNext(t *testing.T) {
 	type testCase[E any] struct {
-		name  string
-		q     NonBlockingLinkedQueue[E]
-		wantE *E
+		name string
+		q    *NonBlockingLinkedQueue[E]
+		init []E
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{1, 99, 98}},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{2, 99, 98}},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{3, 99, 98}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotE := tt.q.PollNext(); !reflect.DeepEqual(gotE, tt.wantE) {
-				t.Errorf("PollNext() = %v, want %v", gotE, tt.wantE)
+			tt.q.Add(tt.init...)
+			on := tt.q.PollNext()
+			pn := tt.q.PeekNext()
+			if reflect.DeepEqual(on, pn) {
+				t.Errorf("PollNext() get = %+v, peek = %+v", on, pn)
 			}
 		})
 	}
 }
 
 func TestNonBlockingLinkedQueue_PollNextN(t *testing.T) {
-	type args struct {
-		n int
-	}
 	type testCase[E any] struct {
-		name  string
-		q     NonBlockingLinkedQueue[E]
-		args  args
-		wantE []E
+		name string
+		q    *NonBlockingLinkedQueue[E]
+		init []E
+		n    int
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{1, 99, 98}, n: 1},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{2, 99, 98}, n: 2},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{3, 99, 98}, n: 3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotE := tt.q.PollNextN(tt.args.n); !reflect.DeepEqual(gotE, tt.wantE) {
-				t.Errorf("PollNextN() = %v, want %v", gotE, tt.wantE)
+			tt.q.Add(tt.init...)
+			on := tt.q.PollNextN(tt.n)
+			pn := tt.q.PeekNextN(tt.n)
+			if reflect.DeepEqual(on, pn) {
+				t.Errorf("PollNextN() get = %+v, peek = %+v", on, pn)
 			}
 		})
 	}
@@ -253,15 +267,19 @@ func TestNonBlockingLinkedQueue_Size(t *testing.T) {
 	type testCase[E any] struct {
 		name string
 		q    *NonBlockingLinkedQueue[E]
-		want int
+		init []E
+		size int
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{1}, size: 1},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{2, 99}, size: 2},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{3, 99, 98}, size: 3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.q.Size(); got != tt.want {
-				t.Errorf("Size() = %v, want %v", got, tt.want)
+			tt.q.Add(tt.init...)
+			if tt.q.Size() != tt.size {
+				t.Errorf("Size() get = %+v, want = %+v", tt.q.Size(), tt.size)
 			}
 		})
 	}

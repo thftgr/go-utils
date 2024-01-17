@@ -5,12 +5,6 @@ import (
 	"testing"
 )
 
-func Test_cap_len(t *testing.T) {
-	s1 := make([]int, 10)
-	t.Logf("cap: %d", cap(s1))
-	t.Logf("len: %d", len(s1))
-}
-
 func TestNonBlockingQueue_Add(t *testing.T) {
 	type testCase[E any] struct {
 		name string
