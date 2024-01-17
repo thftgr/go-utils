@@ -81,30 +81,38 @@ func TestNonBlockingLinkedQueue_Clear(t *testing.T) {
 	type testCase[E any] struct {
 		name string
 		q    *NonBlockingLinkedQueue[E]
+		init []E
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{99, 98}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.q.Add(tt.init...)
 			tt.q.Clear()
+			if !tt.q.IsEmpty() {
+				t.Errorf("Clear() want = true, get %+v", tt.q.IsEmpty())
+			}
 		})
 	}
 }
 
 func TestNonBlockingLinkedQueue_IsEmpty(t *testing.T) {
 	type testCase[E any] struct {
-		name string
-		q    *NonBlockingLinkedQueue[E]
-		want bool
+		name    string
+		q       *NonBlockingLinkedQueue[E]
+		init    []E
+		isEmpty bool
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{}, isEmpty: true},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{99, 98}, isEmpty: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.q.IsEmpty(); got != tt.want {
-				t.Errorf("IsEmpty() = %v, want %v", got, tt.want)
+			tt.q.Add(tt.init...)
+			if tt.q.IsEmpty() != tt.isEmpty {
+				t.Errorf("IsEmpty() want = %+v, get %+v", tt.isEmpty, tt.q.IsEmpty())
 			}
 		})
 	}

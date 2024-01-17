@@ -10,20 +10,20 @@ func TestNonBlockingQueue_Add(t *testing.T) {
 		name string
 		q    *NonBlockingQueue[E]
 		init []E
-		e    []E
+		args []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1}, want: []int{99, 98, 1}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 3}, want: []int{99, 98, 1, 2, 3}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 4, 5}, want: []int{99, 98, 1, 2, 4, 5}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{99, 98, 1}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{99, 98, 2}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{99, 98, 3}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.q.Add(tt.init...)
-			tt.q.Add(tt.e...)
-			if queued := tt.q.PeekNextN(len(tt.want)); !reflect.DeepEqual(queued, tt.want) {
-				t.Errorf("Add() want = %+v, get %+v", tt.want, queued)
+			tt.q.Add(tt.args...)
+			if peek := tt.q.PeekNextN(len(tt.want)); !reflect.DeepEqual(tt.want, peek) {
+				t.Errorf("Add() want = %+v, get %+v", tt.want, peek)
 			}
 		})
 	}
@@ -34,20 +34,20 @@ func TestNonBlockingQueue_AddFirst(t *testing.T) {
 		name string
 		q    *NonBlockingQueue[E]
 		init []E
-		e    []E
+		args []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1}, want: []int{1, 99, 98}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 3}, want: []int{1, 2, 3, 99, 98}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 4, 5}, want: []int{1, 2, 4, 5, 99, 98}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{1, 99, 98}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{2, 99, 98}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{3, 99, 98}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.q.Add(tt.init...)
-			tt.q.AddFirst(tt.e...)
-			if queued := tt.q.PeekNextN(len(tt.want)); !reflect.DeepEqual(queued, tt.want) {
-				t.Errorf("AddFirst() want = %+v, get %+v", tt.want, queued)
+			tt.q.AddFirst(tt.args...)
+			if peek := tt.q.PeekNextN(len(tt.want)); !reflect.DeepEqual(tt.want, peek) {
+				t.Errorf("AddFirst() want = %+v, get %+v", tt.want, peek)
 			}
 		})
 	}
@@ -58,20 +58,20 @@ func TestNonBlockingQueue_AddLast(t *testing.T) {
 		name string
 		q    *NonBlockingQueue[E]
 		init []E
-		e    []E
+		args []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1}, want: []int{99, 98, 1}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 3}, want: []int{99, 98, 1, 2, 3}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 4, 5}, want: []int{99, 98, 1, 2, 4, 5}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{99, 98, 1}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{99, 98, 2}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{99, 98, 3}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.q.Add(tt.init...)
-			tt.q.AddLast(tt.e...)
-			if queued := tt.q.PeekNextN(len(tt.want)); !reflect.DeepEqual(queued, tt.want) {
-				t.Errorf("AddLast() want = %+v, get %+v", tt.want, queued)
+			tt.q.AddLast(tt.args...)
+			if peek := tt.q.PeekNextN(len(tt.want)); !reflect.DeepEqual(tt.want, peek) {
+				t.Errorf("AddLast() want = %+v, get %+v", tt.want, peek)
 			}
 		})
 	}
@@ -82,19 +82,17 @@ func TestNonBlockingQueue_Clear(t *testing.T) {
 		name string
 		q    *NonBlockingQueue[E]
 		init []E
-		e    []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 3}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 4, 5}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.q.Add(tt.init...)
 			tt.q.Clear()
-			if e := tt.q.PeekNext(); e != nil {
-				t.Errorf("Clear() want = nil, get %+v", e)
+			if !tt.q.IsEmpty() {
+				t.Errorf("Clear() want = true, get %+v", tt.q.IsEmpty())
 			}
 		})
 	}
@@ -102,23 +100,20 @@ func TestNonBlockingQueue_Clear(t *testing.T) {
 
 func TestNonBlockingQueue_IsEmpty(t *testing.T) {
 	type testCase[E any] struct {
-		name string
-		q    *NonBlockingQueue[E]
-		init []E
-		e    []E
-		want bool
+		name    string
+		q       *NonBlockingQueue[E]
+		init    []E
+		isEmpty bool
 	}
 	tests := []testCase[int]{
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1}, want: false},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 3}, want: false},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, e: []int{1, 2, 4, 5}, want: false},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{}, e: []int{}, want: true},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{}, isEmpty: true},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{99, 98}, isEmpty: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.q.Add(tt.init...)
-			if e := tt.q.IsEmpty(); e != tt.want {
-				t.Errorf("IsEmpty() want = true, get %+v", e)
+			if tt.q.IsEmpty() != tt.isEmpty {
+				t.Errorf("IsEmpty() want = %+v, get %+v", tt.isEmpty, tt.q.IsEmpty())
 			}
 		})
 	}
@@ -132,20 +127,18 @@ func TestNonBlockingQueue_Peek(t *testing.T) {
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1}, want: []int{1}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1, 2, 3}, want: []int{1, 2, 3}},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1, 2, 4, 5}, want: []int{1, 2, 4, 5}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.q.Add(tt.init...)
-			p1 := make([]int, len(tt.want))
-			p2 := make([]int, len(tt.want))
-			tt.q.Peek(p1)
-			n2 := tt.q.Peek(p2)
-			p2 = p2[:n2]
-			if !reflect.DeepEqual(tt.want, p2) {
-				t.Errorf("Add() want = %+v, get %+v", tt.want, p2)
+			peek := make([]int, len(tt.want))
+			tt.q.PeekNextN(len(tt.want))
+			tt.q.Peek(peek)
+			if !reflect.DeepEqual(tt.want, peek) {
+				t.Errorf("Peek() want = %+v, get %+v", tt.want, peek)
 			}
 		})
 	}
@@ -158,9 +151,9 @@ func TestNonBlockingQueue_PeekNext(t *testing.T) {
 		want E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1}, want: 1},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{2, 2, 3}, want: 2},
-		{name: "", q: &NonBlockingQueue[int]{}, init: []int{3, 2, 4, 5}, want: 3},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1, 99, 98}, want: 1},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{2, 99, 98}, want: 2},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{3, 99, 98}, want: 3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -178,143 +171,124 @@ func TestNonBlockingQueue_PeekNext(t *testing.T) {
 	}
 }
 
-//
-//func TestNonBlockingQueue_Poll(t *testing.T) {
-//	type args[E any] struct {
-//		e []E
-//	}
-//	type testCase[E any] struct {
-//		name    string
-//		q       NonBlockingQueue[E]
-//		args    args[E]
-//		wantN   int
-//		wantErr bool
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			gotN, err := tt.q.Poll(tt.args.e)
-//			if (err != nil) != tt.wantErr {
-//				t.Errorf("Poll() error = %v, wantErr %v", err, tt.wantErr)
-//				return
-//			}
-//			if gotN != tt.wantN {
-//				t.Errorf("Poll() gotN = %v, want %v", gotN, tt.wantN)
-//			}
-//		})
-//	}
-//}
-//
-//func TestNonBlockingQueue_PollNext(t *testing.T) {
-//	type args struct {
-//		n int
-//	}
-//	type testCase[E any] struct {
-//		name string
-//		q    NonBlockingQueue[E]
-//		args args
-//		want []E
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.q.PollNext(tt.args.n); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("PollNext() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestNonBlockingQueue_Size(t *testing.T) {
-//	type testCase[E any] struct {
-//		name string
-//		q    NonBlockingQueue[E]
-//		want int
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.q.Size(); got != tt.want {
-//				t.Errorf("Size() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestNonBlockingQueue_grow(t *testing.T) {
-//	type args struct {
-//		n int
-//	}
-//	type testCase[E any] struct {
-//		name string
-//		q    NonBlockingQueue[E]
-//		args args
-//		want int
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.q.grow(tt.args.n); got != tt.want {
-//				t.Errorf("grow() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestNonBlockingQueue_growSlice(t *testing.T) {
-//	type args[E any] struct {
-//		b []E
-//		n int
-//	}
-//	type testCase[E any] struct {
-//		name string
-//		q    NonBlockingQueue[E]
-//		args args[E]
-//		want []E
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			if got := tt.q.growSlice(tt.args.b, tt.args.n); !reflect.DeepEqual(got, tt.want) {
-//				t.Errorf("growSlice() = %v, want %v", got, tt.want)
-//			}
-//		})
-//	}
-//}
-//
-//func TestNonBlockingQueue_tryGrowByReslice(t *testing.T) {
-//	type args struct {
-//		n int
-//	}
-//	type testCase[E any] struct {
-//		name  string
-//		q     NonBlockingQueue[E]
-//		args  args
-//		want  int
-//		want1 bool
-//	}
-//	tests := []testCase[ /* TODO: Insert concrete types here */ ]{
-//		// TODO: Add test cases.
-//	}
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			got, got1 := tt.q.tryGrowByReslice(tt.args.n)
-//			if got != tt.want {
-//				t.Errorf("tryGrowByReslice() got = %v, want %v", got, tt.want)
-//			}
-//			if got1 != tt.want1 {
-//				t.Errorf("tryGrowByReslice() got1 = %v, want %v", got1, tt.want1)
-//			}
-//		})
-//	}
-//}
+func TestNonBlockingQueue_PeekNextN(t *testing.T) {
+	type testCase[E any] struct {
+		name string
+		q    *NonBlockingQueue[E]
+		init []E
+		want []E
+	}
+	tests := []testCase[int]{
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.q.Add(tt.init...)
+			tt.q.PeekNextN(len(tt.want))
+			peek := tt.q.PeekNextN(len(tt.want))
+			if !reflect.DeepEqual(tt.want, peek) {
+				t.Errorf("PeekNextN() want = %+v, get %+v", tt.want, peek)
+			}
+		})
+	}
+}
+
+func TestNonBlockingQueue_Poll(t *testing.T) {
+	type testCase[E any] struct {
+		name string
+		q    *NonBlockingQueue[E]
+		init []E
+		want []E
+	}
+	tests := []testCase[int]{
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.q.Add(tt.init...)
+			poll := make([]int, len(tt.want))
+			tt.q.Poll(poll)
+			if !reflect.DeepEqual(tt.want, poll) {
+				t.Errorf("Poll() want = %+v, get %+v", tt.want, poll)
+			} else {
+				peek := tt.q.PeekNextN(len(tt.want))
+				if reflect.DeepEqual(tt.want, peek) {
+					t.Errorf("PeekNextN() want != %+v, get %+v", tt.want, peek)
+				}
+			}
+		})
+	}
+}
+
+func TestNonBlockingQueue_PollNext(t *testing.T) {
+	type testCase[E any] struct {
+		name string
+		q    *NonBlockingQueue[E]
+		init []E
+	}
+	tests := []testCase[int]{
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1, 99, 98}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{2, 99, 98}},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{3, 99, 98}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.q.Add(tt.init...)
+			on := tt.q.PollNext()
+			pn := tt.q.PeekNext()
+			if reflect.DeepEqual(on, pn) {
+				t.Errorf("PollNext() get = %+v, peek = %+v", on, pn)
+			}
+		})
+	}
+}
+
+func TestNonBlockingQueue_PollNextN(t *testing.T) {
+	type testCase[E any] struct {
+		name string
+		q    *NonBlockingQueue[E]
+		init []E
+		n    int
+	}
+	tests := []testCase[int]{
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1, 99, 98}, n: 1},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{2, 99, 98}, n: 2},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{3, 99, 98}, n: 3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.q.Add(tt.init...)
+			on := tt.q.PollNextN(tt.n)
+			pn := tt.q.PeekNextN(tt.n)
+			if reflect.DeepEqual(on, pn) {
+				t.Errorf("PollNextN() get = %+v, peek = %+v", on, pn)
+			}
+		})
+	}
+}
+
+func TestNonBlockingQueue_Size(t *testing.T) {
+	type testCase[E any] struct {
+		name string
+		q    *NonBlockingQueue[E]
+		init []E
+		size int
+	}
+	tests := []testCase[int]{
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{1}, size: 1},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{2, 99}, size: 2},
+		{name: "", q: &NonBlockingQueue[int]{}, init: []int{3, 99, 98}, size: 3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.q.Add(tt.init...)
+			if tt.q.Size() != tt.size {
+				t.Errorf("Size() get = %+v, want = %+v", tt.q.Size(), tt.size)
+			}
+		})
+	}
+}
