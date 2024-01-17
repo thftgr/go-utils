@@ -47,7 +47,7 @@ func TestNonBlockingLinkedQueue_AddFirst(t *testing.T) {
 			tt.q.Add(tt.init...)
 			tt.q.AddFirst(tt.args...)
 			if peek := tt.q.PeekNextN(len(tt.want)); !reflect.DeepEqual(tt.want, peek) {
-				t.Errorf("Add() want = %+v, get %+v", tt.want, peek)
+				t.Errorf("AddFirst() want = %+v, get %+v", tt.want, peek)
 			}
 		})
 	}
@@ -71,7 +71,7 @@ func TestNonBlockingLinkedQueue_AddLast(t *testing.T) {
 			tt.q.Add(tt.init...)
 			tt.q.AddLast(tt.args...)
 			if peek := tt.q.PeekNextN(len(tt.want)); !reflect.DeepEqual(tt.want, peek) {
-				t.Errorf("Add() want = %+v, get %+v", tt.want, peek)
+				t.Errorf("AddLast() want = %+v, get %+v", tt.want, peek)
 			}
 		})
 	}
@@ -111,22 +111,25 @@ func TestNonBlockingLinkedQueue_IsEmpty(t *testing.T) {
 }
 
 func TestNonBlockingLinkedQueue_Peek(t *testing.T) {
-	type args[E any] struct {
-		p []E
-	}
 	type testCase[E any] struct {
-		name  string
-		q     NonBlockingLinkedQueue[E]
-		args  args[E]
-		wantN int
+		name string
+		q    *NonBlockingLinkedQueue[E]
+		init []E
+		want []E
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotN := tt.q.Peek(tt.args.p); gotN != tt.wantN {
-				t.Errorf("Peek() = %v, want %v", gotN, tt.wantN)
+			tt.q.Add(tt.init...)
+			peek := make([]int, len(tt.want))
+			tt.q.PeekNextN(len(tt.want))
+			tt.q.Peek(peek)
+			if !reflect.DeepEqual(tt.want, peek) {
+				t.Errorf("Peek() want = %+v, get %+v", tt.want, peek)
 			}
 		})
 	}
@@ -136,37 +139,49 @@ func TestNonBlockingLinkedQueue_PeekNext(t *testing.T) {
 	type testCase[E any] struct {
 		name string
 		q    *NonBlockingLinkedQueue[E]
-		want *E
+		init []E
+		want E
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{1, 99, 98}, want: 1},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{2, 99, 98}, want: 2},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{3, 99, 98}, want: 3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.q.PeekNext(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PeekNext() = %v, want %v", got, tt.want)
+			tt.q.Add(tt.init...)
+			tt.q.PeekNext()
+			peek := tt.q.PeekNext()
+			if !reflect.DeepEqual(&tt.want, peek) {
+				if peek == nil {
+					t.Errorf("PeekNext() want = %+v, get nil", tt.want)
+				} else {
+					t.Errorf("PeekNext() want = %+v, get %+v", tt.want, *peek)
+				}
 			}
 		})
 	}
 }
 
 func TestNonBlockingLinkedQueue_PeekNextN(t *testing.T) {
-	type args struct {
-		n int
-	}
 	type testCase[E any] struct {
-		name  string
-		q     NonBlockingLinkedQueue[E]
-		args  args
-		wantE []E
+		name string
+		q    *NonBlockingLinkedQueue[E]
+		init []E
+		want []E
 	}
 	tests := []testCase[int]{
-		// TODO: Add test cases.
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingLinkedQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotE := tt.q.PeekNextN(tt.args.n); !reflect.DeepEqual(gotE, tt.wantE) {
-				t.Errorf("PeekNextN() = %v, want %v", gotE, tt.wantE)
+			tt.q.Add(tt.init...)
+			tt.q.PeekNextN(len(tt.want))
+			peek := tt.q.PeekNextN(len(tt.want))
+			if !reflect.DeepEqual(tt.want, peek) {
+				t.Errorf("PeekNextN() want = %+v, get %+v", tt.want, peek)
 			}
 		})
 	}
