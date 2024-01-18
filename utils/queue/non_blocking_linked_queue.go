@@ -1,4 +1,4 @@
-package utils
+package queue
 
 type nonBlockingLinkedQueueNode[E any] struct {
 	element *E

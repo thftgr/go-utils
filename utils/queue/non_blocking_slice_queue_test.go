@@ -1,24 +1,22 @@
-package utils
+package queue
 
 import (
 	"reflect"
 	"testing"
 )
 
-// TODO lock 이 제대로 작동하고있는지에 대한 테스트 추가해야함
-
-func TestBlockingQueue_Add(t *testing.T) {
+func TestNonBlockingQueue_Add(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		args []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{99, 98, 1}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{99, 98, 2}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{99, 98, 3}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{99, 98, 1}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{99, 98, 2}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{99, 98, 3}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -31,18 +29,18 @@ func TestBlockingQueue_Add(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_AddFirst(t *testing.T) {
+func TestNonBlockingQueue_AddFirst(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		args []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{1, 99, 98}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{2, 99, 98}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{3, 99, 98}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{1, 99, 98}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{2, 99, 98}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{3, 99, 98}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -55,18 +53,18 @@ func TestBlockingQueue_AddFirst(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_AddLast(t *testing.T) {
+func TestNonBlockingQueue_AddLast(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		args []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{99, 98, 1}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{99, 98, 2}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{99, 98, 3}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{1}, want: []int{99, 98, 1}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{2}, want: []int{99, 98, 2}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, args: []int{3}, want: []int{99, 98, 3}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -79,15 +77,15 @@ func TestBlockingQueue_AddLast(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_Clear(t *testing.T) {
+func TestNonBlockingQueue_Clear(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -100,16 +98,16 @@ func TestBlockingQueue_Clear(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_IsEmpty(t *testing.T) {
+func TestNonBlockingQueue_IsEmpty(t *testing.T) {
 	type testCase[E any] struct {
 		name    string
-		q       *BlockingSliceQueue[E]
+		q       *NonBlockingSliceQueue[E]
 		init    []E
 		isEmpty bool
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{}, isEmpty: true},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{99, 98}, isEmpty: false},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{}, isEmpty: true},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{99, 98}, isEmpty: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -121,17 +119,17 @@ func TestBlockingQueue_IsEmpty(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_Peek(t *testing.T) {
+func TestNonBlockingQueue_Peek(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -145,17 +143,17 @@ func TestBlockingQueue_Peek(t *testing.T) {
 		})
 	}
 }
-func TestBlockingQueue_PeekNext(t *testing.T) {
+func TestNonBlockingQueue_PeekNext(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		want E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{1, 99, 98}, want: 1},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{2, 99, 98}, want: 2},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{3, 99, 98}, want: 3},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{1, 99, 98}, want: 1},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{2, 99, 98}, want: 2},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{3, 99, 98}, want: 3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -173,17 +171,17 @@ func TestBlockingQueue_PeekNext(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_PeekNextN(t *testing.T) {
+func TestNonBlockingQueue_PeekNextN(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -197,17 +195,17 @@ func TestBlockingQueue_PeekNextN(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_Poll(t *testing.T) {
+func TestNonBlockingQueue_Poll(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		want []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{1, 99, 98}, want: []int{1, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{2, 99, 98}, want: []int{2, 99}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{3, 99, 98}, want: []int{3, 99}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -226,16 +224,16 @@ func TestBlockingQueue_Poll(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_PollNext(t *testing.T) {
+func TestNonBlockingQueue_PollNext(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{1, 99, 98}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{2, 99, 98}},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{3, 99, 98}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{1, 99, 98}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{2, 99, 98}},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{3, 99, 98}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -249,17 +247,17 @@ func TestBlockingQueue_PollNext(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_PollNextN(t *testing.T) {
+func TestNonBlockingQueue_PollNextN(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		n    int
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{1, 99, 98}, n: 1},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{2, 99, 98}, n: 2},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{3, 99, 98}, n: 3},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{1, 99, 98}, n: 1},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{2, 99, 98}, n: 2},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{3, 99, 98}, n: 3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -273,17 +271,17 @@ func TestBlockingQueue_PollNextN(t *testing.T) {
 	}
 }
 
-func TestBlockingQueue_Size(t *testing.T) {
+func TestNonBlockingQueue_Size(t *testing.T) {
 	type testCase[E any] struct {
 		name string
-		q    *BlockingSliceQueue[E]
+		q    *NonBlockingSliceQueue[E]
 		init []E
 		size int
 	}
 	tests := []testCase[int]{
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{1}, size: 1},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{2, 99}, size: 2},
-		{name: "", q: &BlockingSliceQueue[int]{}, init: []int{3, 99, 98}, size: 3},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{1}, size: 1},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{2, 99}, size: 2},
+		{name: "", q: &NonBlockingSliceQueue[int]{}, init: []int{3, 99, 98}, size: 3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
