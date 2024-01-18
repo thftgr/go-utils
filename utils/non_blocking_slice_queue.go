@@ -4,17 +4,17 @@ import (
 	"errors"
 )
 
-// NonBlockingQueue is not goroutine-safe
-type NonBlockingQueue[E any] struct {
+// NonBlockingSliceQueue is not goroutine-safe
+type NonBlockingSliceQueue[E any] struct {
 	queue []E
 	off   int
 }
 
-func (q *NonBlockingQueue[E]) Add(e ...E) {
+func (q *NonBlockingSliceQueue[E]) Add(e ...E) {
 	q.AddLast(e...)
 }
 
-func (q *NonBlockingQueue[E]) AddFirst(e ...E) {
+func (q *NonBlockingSliceQueue[E]) AddFirst(e ...E) {
 	es := len(e)
 	_, ok := q.tryGrowByReslice(len(e))
 	if !ok {
@@ -22,11 +22,9 @@ func (q *NonBlockingQueue[E]) AddFirst(e ...E) {
 	}
 	copy(q.queue[es:], q.queue[:q.Size()-es]) // [q1,q2,q3,nil,nil,nil] => [q1,q2,q3,q1,q2,q3]
 	copy(q.queue[:es], e)                     // [e1,e2,e3] + [q1,q2,q3,q1,q2,q3] => [q1,q2,q3,q1,q2,q3]
-	//copy(q.queue[es:], q.queue[:es])              // [q1,q2,q3,nil,nil,nil] => [q1,q2,q3,q1,q2,q3]
-	//copy(q.queue[:es], e)                         // [e1,e2,e3] + [q1,q2,q3,q1,q2,q3] => [q1,q2,q3,q1,q2,q3]
 }
 
-func (q *NonBlockingQueue[E]) AddLast(e ...E) {
+func (q *NonBlockingSliceQueue[E]) AddLast(e ...E) {
 	m, ok := q.tryGrowByReslice(len(e))
 	if !ok {
 		m = q.grow(len(e))
@@ -34,7 +32,7 @@ func (q *NonBlockingQueue[E]) AddLast(e ...E) {
 	copy(q.queue[m:], e)
 }
 
-func (q *NonBlockingQueue[E]) Poll(e []E) (n int) {
+func (q *NonBlockingSliceQueue[E]) Poll(e []E) (n int) {
 	if q.IsEmpty() {
 		q.Clear()
 		return
@@ -44,7 +42,7 @@ func (q *NonBlockingQueue[E]) Poll(e []E) (n int) {
 	return
 }
 
-func (q *NonBlockingQueue[E]) PollNext() *E {
+func (q *NonBlockingSliceQueue[E]) PollNext() *E {
 	if q.IsEmpty() {
 		q.Clear()
 		return nil
@@ -54,13 +52,13 @@ func (q *NonBlockingQueue[E]) PollNext() *E {
 	q.off++
 	return &data[0]
 }
-func (q *NonBlockingQueue[E]) PollNextN(n int) (e []E) {
+func (q *NonBlockingSliceQueue[E]) PollNextN(n int) (e []E) {
 	e = make([]E, n)
 	pn := q.Poll(e)
 	return e[:pn]
 }
 
-func (q *NonBlockingQueue[E]) Peek(e []E) (n int) {
+func (q *NonBlockingSliceQueue[E]) Peek(e []E) (n int) {
 	if q.IsEmpty() {
 		q.Clear()
 		return
@@ -68,7 +66,7 @@ func (q *NonBlockingQueue[E]) Peek(e []E) (n int) {
 	return copy(e, q.queue[q.off:])
 }
 
-func (q *NonBlockingQueue[E]) PeekNext() *E {
+func (q *NonBlockingSliceQueue[E]) PeekNext() *E {
 	if q.IsEmpty() {
 		q.Clear()
 		return nil
@@ -77,26 +75,26 @@ func (q *NonBlockingQueue[E]) PeekNext() *E {
 	data := q.queue[q.off : q.off+1]
 	return &data[0]
 }
-func (q *NonBlockingQueue[E]) PeekNextN(n int) (e []E) {
+func (q *NonBlockingSliceQueue[E]) PeekNextN(n int) (e []E) {
 	e = make([]E, n)
 	pn := q.Peek(e)
 	return e[:pn]
 }
 
-func (q *NonBlockingQueue[E]) IsEmpty() bool {
+func (q *NonBlockingSliceQueue[E]) IsEmpty() bool {
 	return len(q.queue) <= q.off
 }
 
-func (q *NonBlockingQueue[E]) Size() int {
+func (q *NonBlockingSliceQueue[E]) Size() int {
 	return len(q.queue) - q.off
 }
 
-func (q *NonBlockingQueue[E]) Clear() {
+func (q *NonBlockingSliceQueue[E]) Clear() {
 	q.queue = q.queue[:0]
 	q.off = 0
 }
 
-func (q *NonBlockingQueue[E]) tryGrowByReslice(n int) (int, bool) {
+func (q *NonBlockingSliceQueue[E]) tryGrowByReslice(n int) (int, bool) {
 	if l := len(q.queue); n <= cap(q.queue)-l {
 		q.queue = q.queue[:l+n]
 		return l, true
@@ -104,12 +102,12 @@ func (q *NonBlockingQueue[E]) tryGrowByReslice(n int) (int, bool) {
 	return 0, false
 }
 
-var ErrTooLarge = errors.New("utils.NonBlockingQueue: too large")
+var ErrTooLarge = errors.New("utils.NonBlockingSliceQueue: too large")
 
 const maxInt = int(^uint(0) >> 1)
 const smallBufferSize = 64
 
-func (q *NonBlockingQueue[E]) grow(n int) int {
+func (q *NonBlockingSliceQueue[E]) grow(n int) int {
 	m := q.Size()
 	// If buffer is empty, reset to recover space.
 	if m == 0 && q.off != 0 {
@@ -142,7 +140,7 @@ func (q *NonBlockingQueue[E]) grow(n int) int {
 	return m
 }
 
-func (q *NonBlockingQueue[E]) growSlice(b []E, n int) []E {
+func (q *NonBlockingSliceQueue[E]) growSlice(b []E, n int) []E {
 	defer func() {
 		if recover() != nil {
 			panic(ErrTooLarge)
