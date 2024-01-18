@@ -1,5 +1,7 @@
 package utils
 
+import "errors"
+
 type Queue[E any] interface {
 	Add(...E) // add last
 	AddFirst(...E)
@@ -21,3 +23,8 @@ type Queue[E any] interface {
 // ===================================================================================================
 // ===================================================================================================
 // ===================================================================================================
+
+var ErrTooLarge = errors.New("utils.NonBlockingSliceQueue: too large")
+
+const maxInt = int(^uint(0) >> 1)
+const smallBufferSize = 64

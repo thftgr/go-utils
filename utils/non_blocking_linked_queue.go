@@ -1,14 +1,14 @@
 package utils
 
-type node[E any] struct {
+type nonBlockingLinkedQueueNode[E any] struct {
 	element *E
-	next    *node[E]
+	next    *nonBlockingLinkedQueueNode[E]
 }
 
 // NonBlockingLinkedQueue is not goroutine-safe
 type NonBlockingLinkedQueue[E any] struct {
-	first *node[E]
-	last  *node[E]
+	first *nonBlockingLinkedQueueNode[E]
+	last  *nonBlockingLinkedQueueNode[E]
 	size  int
 }
 
@@ -18,7 +18,7 @@ func (q *NonBlockingLinkedQueue[E]) Add(e ...E) {
 
 func (q *NonBlockingLinkedQueue[E]) AddFirst(e ...E) {
 	for i := len(e) - 1; i >= 0; i-- {
-		q.first = &node[E]{element: &e[i], next: q.first}
+		q.first = &nonBlockingLinkedQueueNode[E]{element: &e[i], next: q.first}
 	}
 
 	if q.last == nil {
@@ -38,11 +38,11 @@ func (q *NonBlockingLinkedQueue[E]) AddLast(e ...E) {
 	}
 
 	// 임시 리스트 생성
-	first := &node[E]{element: &e[0]}
+	first := &nonBlockingLinkedQueueNode[E]{element: &e[0]}
 	last := first
 
 	for i := range e[1:] {
-		last.next = &node[E]{element: &e[i+1]}
+		last.next = &nonBlockingLinkedQueueNode[E]{element: &e[i+1]}
 		last = last.next
 	}
 	if q.last == nil {
