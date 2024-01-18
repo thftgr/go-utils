@@ -35,9 +35,6 @@ func (q *BlockingLinkedQueue[E]) AddFirst(e ...E) {
 }
 
 func (q *BlockingLinkedQueue[E]) AddLast(e ...E) {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
-
 	if len(e) < 1 {
 		return
 	}
@@ -46,6 +43,8 @@ func (q *BlockingLinkedQueue[E]) AddLast(e ...E) {
 		q.Clear()
 	}
 
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	// 임시 리스트 생성
 	first := &blockingLinkedQueueNode[E]{element: &e[0]}
 	last := first
@@ -65,12 +64,12 @@ func (q *BlockingLinkedQueue[E]) AddLast(e ...E) {
 }
 
 func (q *BlockingLinkedQueue[E]) Poll(p []E) (n int) {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
 	if q.IsEmpty() {
 		q.Clear()
 		return
 	}
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	m := len(p)
 	if q.size < m {
 		m = q.size
@@ -85,13 +84,13 @@ func (q *BlockingLinkedQueue[E]) Poll(p []E) (n int) {
 }
 
 func (q *BlockingLinkedQueue[E]) PollNext() (e *E) {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
+
 	if q.IsEmpty() {
 		q.Clear()
 		return nil
 	}
-
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	q.size--
 	e = q.first.element
 	q.first = q.first.next
@@ -99,19 +98,18 @@ func (q *BlockingLinkedQueue[E]) PollNext() (e *E) {
 }
 
 func (q *BlockingLinkedQueue[E]) PollNextN(n int) (e []E) {
-
 	e = make([]E, n)
 	pn := q.Poll(e) // poll use mutex
 	return e[:pn]
 }
 
 func (q *BlockingLinkedQueue[E]) Peek(p []E) (n int) {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
 	if q.IsEmpty() {
 		q.Clear()
 		return
 	}
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	m := len(p)
 	if q.size < m {
 		m = q.size
@@ -125,12 +123,12 @@ func (q *BlockingLinkedQueue[E]) Peek(p []E) (n int) {
 }
 
 func (q *BlockingLinkedQueue[E]) PeekNext() *E {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
 	if q.IsEmpty() {
 		q.Clear()
 		return nil
 	}
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	return q.first.element
 }
 
