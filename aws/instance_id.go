@@ -19,7 +19,7 @@ func GetInstanceId() (string, error) {
 		b, err := io.ReadAll(res.Body)
 		return string(b), err
 	} else {
-		return "", fmt.Errorf("StatusCode != 200, response: %s")
+		return "", fmt.Errorf("StatusCode != 200, response: %d", res.StatusCode)
 	}
 
 }
