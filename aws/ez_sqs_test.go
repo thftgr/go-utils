@@ -23,9 +23,9 @@ func TestEzSqs_GetMessage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			q := &EzSqs{
-				client:   tt.client,
-				queueUrl: tt.queueUrl,
-				timeout:  tt.timeout,
+				Client:   tt.client,
+				QueueUrl: tt.queueUrl,
+				Timeout:  tt.timeout,
 			}
 			got, err := q.GetMessage()
 			if (err != nil) != tt.wantErr {
@@ -54,9 +54,9 @@ func TestEzSqs_GetMessages(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			q := &EzSqs{
-				client:   tt.client,
-				queueUrl: tt.queueUrl,
-				timeout:  tt.timeout,
+				Client:   tt.client,
+				QueueUrl: tt.queueUrl,
+				Timeout:  tt.timeout,
 			}
 			got, err := q.GetMessages(tt.size)
 			if (err != nil) != tt.wantErr {
@@ -84,9 +84,9 @@ func TestEzSqs_SendMessage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			q := &EzSqs{
-				client:   tt.client,
-				queueUrl: tt.queueUrl,
-				timeout:  tt.timeout,
+				Client:   tt.client,
+				QueueUrl: tt.queueUrl,
+				Timeout:  tt.timeout,
 			}
 			if err := q.SendMessage(tt.message); (err != nil) != tt.wantErr {
 				t.Errorf("SendMessage() error = %v, wantErr %v", err, tt.wantErr)

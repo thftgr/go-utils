@@ -10,40 +10,40 @@ import (
 
 // EzSqs 간단한 sqs 작업을 지원합니다.
 type EzSqs struct {
-	client   *sqs.Client
-	queueUrl *string
-	timeout  time.Duration
+	Client   *sqs.Client
+	QueueUrl *string
+	Timeout  time.Duration
 }
 
 func NewEzSqs(cfg *aws.Config, queueName string, maxTimeout time.Duration) (q *EzSqs, err error) {
-	q = &EzSqs{client: sqs.NewFromConfig(*cfg), timeout: maxTimeout}
-	ctx, cancel := context.WithTimeout(context.Background(), q.timeout)
+	q = &EzSqs{Client: sqs.NewFromConfig(*cfg), Timeout: maxTimeout}
+	ctx, cancel := context.WithTimeout(context.Background(), q.Timeout)
 	defer cancel()
-	res, err := q.client.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{QueueName: &queueName})
+	res, err := q.Client.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{QueueName: &queueName})
 	if err != nil {
 		return nil, err
 	}
-	q.queueUrl = res.QueueUrl
+	q.QueueUrl = res.QueueUrl
 
 	return
 }
 
 func (q *EzSqs) SendMessage(message string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), q.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), q.Timeout)
 	defer cancel()
-	_, err := q.client.SendMessage(ctx, &sqs.SendMessageInput{
+	_, err := q.Client.SendMessage(ctx, &sqs.SendMessageInput{
 		MessageBody: &message,
-		QueueUrl:    q.queueUrl,
+		QueueUrl:    q.QueueUrl,
 	})
 	return err
 }
 
 func (q *EzSqs) GetMessage() (*types.Message, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), q.timeout) // 큐의 롱폴링 max 대기시간이 20초임.
+	ctx, cancel := context.WithTimeout(context.Background(), q.Timeout) // 큐의 롱폴링 max 대기시간이 20초임.
 	defer cancel()
 
-	res, err := q.client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
-		QueueUrl:            q.queueUrl,
+	res, err := q.Client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
+		QueueUrl:            q.QueueUrl,
 		MaxNumberOfMessages: 1, // 1개만 가져옴
 	})
 	if err != nil {
@@ -60,11 +60,11 @@ func (q *EzSqs) GetMessage() (*types.Message, error) {
 // size range 1~10
 // if 0 apply default value 1
 func (q *EzSqs) GetMessages(size int) ([]types.Message, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), q.timeout) // 큐의 롱폴링 max 대기시간이 20초임.
+	ctx, cancel := context.WithTimeout(context.Background(), q.Timeout) // 큐의 롱폴링 max 대기시간이 20초임.
 	defer cancel()
 
-	res, err := q.client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
-		QueueUrl:            q.queueUrl,
+	res, err := q.Client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
+		QueueUrl:            q.QueueUrl,
 		MaxNumberOfMessages: int32(size), // n개 가져옴
 	})
 	if err != nil {
