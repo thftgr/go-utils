@@ -128,3 +128,20 @@ func (b *EzS3) PutObject(key string, body io.Reader) (err error) {
 	_, err = b.Client.PutObject(ctx, &s3.PutObjectInput{Bucket: b.Bucket, Key: &key, Body: body})
 	return
 }
+
+// DeleteObject
+// param:
+//
+//	O key string: my/bucket/path/filename.png
+//	X key string: /my/bucket/path/filename.png
+//	X key string: s3://mybucket/my/bucket/path/filename.png
+//
+// return:
+//
+//	error         : error
+func (b *EzS3) DeleteObject(key string) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), b.Timeout)
+	defer cancel()
+	_, err = b.Client.DeleteObject(ctx, &s3.DeleteObjectInput{Bucket: b.Bucket, Key: &key})
+	return
+}
