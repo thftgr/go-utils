@@ -17,3 +17,11 @@ func And[E comparable](t E, v ...E) bool {
 	}
 	return true
 }
+
+func If[E any](b bool, t E, f E) E {
+	if b {
+		return t
+	} else {
+		return f
+	}
+}
