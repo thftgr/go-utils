@@ -15,6 +15,12 @@ type EzSqs struct {
 	Timeout  time.Duration
 }
 
+// NewEzSqs
+//
+//	param:
+//		cfg *aws.Config          : aws config
+//		queueName string         : sqs queue name
+//		maxTimeout time.Duration : sqs timeout
 func NewEzSqs(cfg *aws.Config, queueName string, maxTimeout time.Duration) (q *EzSqs, err error) {
 	q = &EzSqs{Client: sqs.NewFromConfig(*cfg), Timeout: maxTimeout}
 	ctx, cancel := context.WithTimeout(context.Background(), q.Timeout)
@@ -74,4 +80,11 @@ func (q *EzSqs) GetMessages(size int) ([]types.Message, error) {
 		return nil, nil
 	}
 	return res.Messages, nil
+}
+
+func (q *EzSqs) DeleteMessage(receiptHandle *string) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), q.Timeout)
+	defer cancel()
+	_, err = q.Client.DeleteMessage(ctx, &sqs.DeleteMessageInput{QueueUrl: q.QueueUrl, ReceiptHandle: receiptHandle})
+	return
 }
